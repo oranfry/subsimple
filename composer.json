@@ -1,0 +1,10 @@
+{
+    "name": "oranfry/subsimple",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "git@github.com:oranfry/subsimple.git"
+        }
+    ]
+}
+
