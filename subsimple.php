@@ -67,6 +67,10 @@ function findManyByObjCode($objCode, $items) {
     return findManyBy('objCode', $objCode, $items);
 }
 
+function findManyByItemCode($itemCode, $items) {
+    return findManyBy('itemCode', $itemCode, $items);
+}
+
 function pad($items, $padding, $by)
 {
     $results = [];
@@ -119,10 +123,15 @@ function var_stream_xml($xml)
     ini_set('xdebug.var_display_max_data', $orig_max_data);
 }
 
-function _var_die() {
+function var_die() {
     if (!headers_sent()) {
         header("Content-Type: text/html");
     }
+    call_user_func_array('_var_die', array_merge([1], func_get_args()));
+    die("<hr><p style='font-family: monospace; text-align: center'>var_die</p>");
+}
+
+function _var_die() {
     $args = func_get_args();
     $caller = debug_backtrace()[array_shift($args) + 1];
     print("<div style='margin-bottom: 40px'>");
