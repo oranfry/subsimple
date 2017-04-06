@@ -183,7 +183,7 @@ function parse_json_request($_paramNames)
     $paramNames = [];
 
     foreach ($_paramNames as $_paramName) {
-        if (!preg_match('/([a-z_]+)(\?)?$/', $_paramName, $groups)) {
+        if (!preg_match('/^([a-zA-Z_]+)(\?)?$/', $_paramName, $groups)) {
             error_response('Bad param ' . $_paramName, 500);
         }
 
