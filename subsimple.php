@@ -171,7 +171,7 @@ function error_response($message, $statusCode = "400", $statusText = null)
     die(json_encode(['error' => $message]));
 }
 
-function parse_json_request($paramNames) 
+function parse_json_request($_paramNames) 
 {
     $data = json_decode(file_get_contents('php://input'), true);
 
@@ -179,9 +179,25 @@ function parse_json_request($paramNames)
         error_response('Request body was not valid JSON', 400);
     }
 
-    sort($paramNames);
-
     $providedKeys = array_keys($data);
+
+    $paramNames = [];
+
+    foreach ($_paramNames as $_paramName) {
+        if (!preg_match('/([a-z_]+)(\?)?$/', $_paramName, $groups)) {
+            error_response('Bad param ' . $_paramName, 500);
+        }
+
+        $optional = ($groups[2] == '?');
+
+        if (!$optional) {
+            $paramNames[] = $groups[1];
+        } elseif(($key = array_search($groups[1], $providedKeys)) !== false) {
+            unset($providedKeys[$key]);
+        }
+    }
+
+    sort($paramNames);
     sort($providedKeys);
 
     if ($paramNames != $providedKeys) {
