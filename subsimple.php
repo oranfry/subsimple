@@ -1,6 +1,6 @@
 <?php
 
-function findBy($by, $value, $items)
+function &findBy($by, $value, $items)
 {
     foreach ($items as $item) {
         $item = (object) $item;
@@ -18,7 +18,7 @@ function findBy($by, $value, $items)
     }
 }
 
-function findManyBy($by, $value, $items)
+function &findManyBy($by, $value, $items)
 {
     $results = [];
 
@@ -32,42 +32,41 @@ function findManyBy($by, $value, $items)
     return $results;
 }
 
-
-function findById($id, $items)
+function &findById($id, $items)
 {
     return findBy('id', $id, $items);
 }
 
-function findByObjCode($objCode, $items)
+function &findByObjCode($objCode, $items)
 {
     return findBy('objCode', $objCode, $items);
 }
 
-function findByItemCode($itemCode, $items)
+function &findByItemCode($itemCode, $items)
 {
     return findBy('itemCode', $itemCode, $items);
 }
 
-function findByName($name, $items)
+function &findByName($name, $items)
 {
     return findBy('name', $name, $items);
 }
 
-function findByNumber($number, $items)
+function &findByNumber($number, $items)
 {
     return findBy('number', $number, $items);
 }
 
-function findByCode($code, $items)
+function &findByCode($code, $items)
 {
     return findBy('code', $code, $items);
 }
 
-function findManyByObjCode($objCode, $items) {
+function &findManyByObjCode($objCode, $items) {
     return findManyBy('objCode', $objCode, $items);
 }
 
-function findManyByItemCode($itemCode, $items) {
+function &findManyByItemCode($itemCode, $items) {
     return findManyBy('itemCode', $itemCode, $items);
 }
 
