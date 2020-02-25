@@ -1,7 +1,4 @@
-#!/usr/bin/php
 <?php
-define('APP_HOME', dirname(dirname(__DIR__)));
-
 require __DIR__ . '/functions.php';
 define_autoloader();
 Config::set(require APP_HOME . '/config.php');
