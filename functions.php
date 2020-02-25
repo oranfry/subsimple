@@ -28,6 +28,16 @@ function with_plugins($callback)
     }
 
     closedir($h);
+
+    if (defined('CUSTOM_PLUGINS')) {
+        foreach (CUSTOM_PLUGINS as $plugin_dir) {
+            if ($callback($plugin_dir, basename($plugin_dir))) {
+                $result = true;
+                break;
+            }
+        }
+    }
+
     return $result;
 }
 
