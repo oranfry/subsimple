@@ -12,6 +12,10 @@ final class Db
             Config::get()->db_creds->password,
             Config::get()->db_creds->db
         );
+
+        if (is_bool(static::$link)) {
+            error_response(mysqli_connect_error(), 500);
+        }
     }
 
     public static function succeed($query, $error_message = null)
