@@ -9,6 +9,7 @@ define_autoloader();
 Config::set(require APP_HOME . '/config.php');
 
 load_plugin_libs();
+init_plugins();
 route();
 $viewdata = do_controller();
 
