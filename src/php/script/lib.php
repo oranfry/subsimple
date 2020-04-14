@@ -25,7 +25,7 @@ function route()
     }
 
     if (AUTHSCHEME == 'header' && @getallheaders()['X-Auth'] != Config::get()->password) {
-        die();
+        error_response('Bad / missing auth header', 403);
     }
 
     if (!Router::match($path)) {
