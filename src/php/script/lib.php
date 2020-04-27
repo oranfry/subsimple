@@ -28,7 +28,19 @@ function route()
         error_response('Bad / missing auth header', 403);
     }
 
-    if (!Router::match($path)) {
+    $routerclass = @Config::get()->router;
+
+    if (!$routerclass) {
+        error_response('Router not specified');
+    }
+
+    if (!class_exists($routerclass)) {
+        error_response('Specified router class does not exist');
+    }
+
+    $router = new $routerclass();
+
+    if (!$router->match($path)) {
         error_response('Not found', 404);
     }
 
