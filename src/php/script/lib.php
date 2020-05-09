@@ -3,14 +3,17 @@ if (!defined('AUTHSCHEME')) {
     define('AUTHSCHEME', 'cookie');
 }
 
-if (!in_array(AUTHSCHEME, ['cookie', 'header'])) {
-    error_log('AUTHSCHEME should be set to "cookie" or "header"');
+if (!in_array(AUTHSCHEME, ['cookie', 'header', 'none'])) {
+    error_log('AUTHSCHEME should be set to "cookie", "header" or "none"');
     die();
 }
 
 function route()
 {
-    $path = strtok($_SERVER["REQUEST_URI"], '?');
+    global $argv;
+
+    $rawpath = isset($_SERVER["REQUEST_URI"]) ? $_SERVER["REQUEST_URI"] : $argv[1];
+    $path = strtok($rawpath, '?');
 
     if (AUTHSCHEME == 'cookie' && preg_match(',^/$,', $path, $groups)) {
         require APP_HOME . '/src/php/script/login.php';

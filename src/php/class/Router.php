@@ -6,13 +6,13 @@ class Router
     public static function match($path)
     {
         foreach (static::$routes as $route => $params) {
-            if (!preg_match('/^(GET|POST|DELETE)\s+(\S+)/', $route, $groups)) {
+            if (!preg_match('/^(CLI|GET|POST|DELETE)\s+(\S+)/', $route, $groups)) {
                 error_response("Invalid route: {$route}");
             }
 
             list(, $method, $pattern) = $groups;
 
-            if ($method != $_SERVER['REQUEST_METHOD']) {
+            if ($method != (@$_SERVER['REQUEST_METHOD'] ?? 'CLI')) {
                 continue;
             }
 
