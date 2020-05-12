@@ -16,6 +16,12 @@ final class Db
         if (is_bool(static::$link)) {
             error_response(mysqli_connect_error(), 500);
         }
+
+        $timezone = @Config::get()->timezone;
+
+        if ($timezone) {
+            static::succeed("SET time_zone = '{$timezone}'", 'Failed to set timezone');
+        }
     }
 
     public static function succeed($query, $error_message = null)
