@@ -78,3 +78,17 @@ function define_autoloader()
         }
     });
 }
+
+function error_response($message, $code = 400)
+{
+    http_response_code($code);
+
+    $error = $message;
+    $layout = defined('LAYOUT') ? LAYOUT : 'main';
+
+    error_log("{$code} {$message} " . var_export(debug_backtrace(), 1));
+
+    require APP_HOME . '/src/php/layout/' . $layout . '-error.php';
+    die();
+}
+
