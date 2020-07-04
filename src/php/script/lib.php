@@ -15,13 +15,7 @@ function route()
     $rawpath = isset($_SERVER["REQUEST_URI"]) ? $_SERVER["REQUEST_URI"] : $argv[1];
     $path = strtok($rawpath, '?');
 
-    if (AUTHSCHEME == 'cookie' && preg_match(',^/$,', $path, $groups)) {
-        require APP_HOME . '/src/php/script/login.php';
-
-        die();
-    }
-
-    if (AUTHSCHEME == 'cookie' && @$_SESSION["AUTH"] != Config::get()->password) {
+    if (AUTHSCHEME == 'cookie' && @$_SESSION["AUTH"] !== true && !preg_match(',^/$,', $path, $groups)) {
         header("Location: /");
 
         die();
