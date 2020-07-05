@@ -15,7 +15,7 @@ function route()
     $rawpath = isset($_SERVER["REQUEST_URI"]) ? $_SERVER["REQUEST_URI"] : $argv[1];
     $path = strtok($rawpath, '?');
 
-    if (AUTHSCHEME == 'cookie' && @$_SESSION["AUTH"] !== true && !preg_match(',^/$,', $path, $groups)) {
+    if (AUTHSCHEME == 'cookie' && !@$_SESSION["AUTH"] && !preg_match(',^/$,', $path, $groups)) {
         header("Location: /");
 
         die();
