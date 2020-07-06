@@ -21,10 +21,6 @@ function route()
         die();
     }
 
-    if (AUTHSCHEME == 'header' && @getallheaders()['X-Auth'] != Config::get()->password) {
-        error_response('Bad / missing auth header', 403);
-    }
-
     $routerclass = @Config::get()->router;
 
     if (!$routerclass) {
@@ -43,6 +39,10 @@ function route()
 
     if (!defined('PAGE') || !file_exists(APP_HOME . '/src/php/controller/' . PAGE . '.php')) {
         error_response('Not set up', 500);
+    }
+
+    if ((!defined('NOAUTH') || !NOAUTH) && AUTHSCHEME == 'header' && !@getallheaders()['X-Auth']) {
+        error_response('Missing auth header', 403);
     }
 }
 
