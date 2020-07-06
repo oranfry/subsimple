@@ -79,7 +79,7 @@ function define_autoloader()
     });
 }
 
-function error_response($message, $code = 400)
+function error_response($message, $code = 400, $info = [])
 {
     http_response_code($code);
 
