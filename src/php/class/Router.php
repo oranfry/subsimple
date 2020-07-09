@@ -6,17 +6,32 @@ class Router
     public static function match($path)
     {
         foreach (static::$routes as $route => $params) {
-            if (!preg_match('/^(CLI|GET|POST|DELETE)\s+(\S+)/', $route, $groups)) {
+            if (!preg_match('/^(GET|POST|DELETE)\s+(\S+)$/', $route, $groups) && !preg_match('/^(CLI)\s+(.*)$/', $route, $groups)) {
                 error_response("Invalid route: {$route}");
             }
 
             list(, $method, $pattern) = $groups;
 
-            if ($method != (@$_SERVER['REQUEST_METHOD'] ?? 'CLI')) {
+            if ($method != ($_SERVER['REQUEST_METHOD'] ?? 'CLI')) {
                 continue;
             }
 
-            if (!preg_match("@^{$pattern}$@", $path, $groups)) {
+            if ($method == 'CLI') {
+                $routeparts = explode(' ', $pattern);
+                $pathparts = explode(' ', $path);
+
+                if (count($routeparts) != count($pathparts)) {
+                    continue;
+                }
+
+                foreach ($routeparts as $i => $routepart) {
+                    if (!preg_match('@' . str_replace('@', '\@', $routepart) . '@', $pathparts[$i])) {
+                        continue 2;
+                    }
+                }
+
+                $groups = array_merge(['CLI'], $pathparts);
+            } elseif (!preg_match("@^{$pattern}$@", $path, $groups)) {
                 continue;
             }
 

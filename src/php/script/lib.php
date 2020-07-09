@@ -12,8 +12,11 @@ function route()
 {
     global $argv;
 
-    $rawpath = isset($_SERVER["REQUEST_URI"]) ? $_SERVER["REQUEST_URI"] : $argv[1];
-    $path = strtok($rawpath, '?');
+    if (isset($argv)) {
+        $command = array_shift($argv);
+    }
+
+    $path = isset($_SERVER["REQUEST_URI"]) ? strtok($_SERVER["REQUEST_URI"], '?') : implode(' ', $argv);
 
     if (AUTHSCHEME == 'cookie' && !@$_SESSION["AUTH"] && !preg_match(',^/$,', $path, $groups)) {
         header("Location: /");
