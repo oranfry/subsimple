@@ -79,7 +79,7 @@ function define_autoloader()
     });
 }
 
-function error_response($message, $code = 400)
+function error_response($message, $code = 400, $info = [])
 {
     http_response_code($code);
 
@@ -88,7 +88,13 @@ function error_response($message, $code = 400)
 
     error_log("{$code} {$message} " . var_export(debug_backtrace(), 1));
 
-    require APP_HOME . '/src/php/layout/' . $layout . '-error.php';
+    foreach ([APP_HOME . '/src/php/layout/' . $layout . '-error.php', APP_HOME . '/src/php/layout/error.php'] as $layout_file) {
+        if (file_exists($layout_file)) {
+            require $layout_file;
+            die();
+        }
+    }
+
+    echo "An error occurred but we are unable to display any details<br>";
     die();
 }
-

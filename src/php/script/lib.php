@@ -15,20 +15,10 @@ function route()
     $rawpath = isset($_SERVER["REQUEST_URI"]) ? $_SERVER["REQUEST_URI"] : $argv[1];
     $path = strtok($rawpath, '?');
 
-    if (AUTHSCHEME == 'cookie' && preg_match(',^/$,', $path, $groups)) {
-        require APP_HOME . '/src/php/script/login.php';
-
-        die();
-    }
-
-    if (AUTHSCHEME == 'cookie' && @$_SESSION["AUTH"] != Config::get()->password) {
+    if (AUTHSCHEME == 'cookie' && !@$_SESSION["AUTH"] && !preg_match(',^/$,', $path, $groups)) {
         header("Location: /");
 
         die();
-    }
-
-    if (AUTHSCHEME == 'header' && @getallheaders()['X-Auth'] != Config::get()->password) {
-        error_response('Bad / missing auth header', 403);
     }
 
     $routerclass = @Config::get()->router;
@@ -49,6 +39,10 @@ function route()
 
     if (!defined('PAGE') || !file_exists(APP_HOME . '/src/php/controller/' . PAGE . '.php')) {
         error_response('Not set up', 500);
+    }
+
+    if ((!defined('NOAUTH') || !NOAUTH) && AUTHSCHEME == 'header' && !@getallheaders()['X-Auth']) {
+        error_response('Missing auth header', 403);
     }
 }
 
