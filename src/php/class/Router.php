@@ -44,7 +44,9 @@ class Router
                     error_response('Routing error', 500);
                 }
 
-                $page_params[$params[$i]] = $group;
+                if ($params[$i]) {
+                    $page_params[$params[$i]] = $group;
+                }
             }
 
             foreach ($params as $key => $value) {
