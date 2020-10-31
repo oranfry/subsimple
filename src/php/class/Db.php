@@ -1,76 +1,51 @@
 <?php
 final class Db
 {
-    protected static $link;
     protected static $pdo;
+    protected static $origAutocommit = null;
 
     public static function connect()
     {
-        static::$link = mysqli_connect(
-            @Config::get()->db_creds->host ?: '127.0.0.1',
+        $connection_string =
+            "mysql:" .
+            "host=" . (@Config::get()->db_creds->host ?: '127.0.0.1') . ';' .
+            "dbname=" . Config::get()->db_creds->db;
+
+        static::$pdo = new PDO(
+            $connection_string,
             Config::get()->db_creds->username,
-            Config::get()->db_creds->password,
-            Config::get()->db_creds->db
+            Config::get()->db_creds->password
         );
 
-        if (is_bool(static::$link)) {
-            error_response(mysqli_connect_error(), 500);
+        if (!static::$pdo) {
+            error_response("Pdo connection problem\n" . implode("\n", static::$pdo->errorInfo()));
         }
 
         $timezone = @Config::get()->timezone;
 
         if ($timezone) {
-            static::succeed("SET time_zone = '{$timezone}'", 'Failed to set timezone');
+            static::succeed("SET time_zone = '{$timezone}'", [], 'Failed to set timezone');
         }
     }
 
-    public static function succeed($query, $error_message = null)
+    public static function succeed($query, $params = [], $error_message = null)
     {
-        $result = mysqli_query(static::$link, $query);
+        $stmt = static::prepare($query);
 
-        if ($result === false) {
-            $message = ($error_message ? "{$error_message}\n\n" : '') . mysqli_error(static::$link) . "\n\n{$query}";
-
-            error_response($message, 500);
-        }
-
-        return $result;
-    }
-
-    public static function error()
-    {
-        return mysqli_error(static::$link);
-    }
-
-    public static function affected()
-    {
-        return mysqli_affected_rows(static::$link);
-    }
-
-    private static function checkPdoLink()
-    {
-        if (!static::$pdo) {
-            $connection_string =
-                "mysql:" .
-                "host=" . (@Config::get()->db_creds->host ?: '127.0.0.1') . ';' .
-                "dbname=" . Config::get()->db_creds->db;
-
-            static::$pdo = new PDO(
-                $connection_string,
-                Config::get()->db_creds->username,
-                Config::get()->db_creds->password
-            );
-
-            if (!static::$pdo) {
-                error_response("Pdo connection problem\n" . implode("\n", static::$pdo->errorInfo()));
+        if (!$stmt->execute($params)) {
+            if ($origAutocommit !== null) {
+                static::rollback();
             }
+
+            error_log("DB: did not succeed: {$query} " . print_r($stmt->errorInfo(), 1));
+            error_response($error_message ?? 'Error', 500);
         }
+
+        return $stmt;
     }
 
     public static function prepare($query)
     {
-        static::checkPdoLink();
-
         $statement = static::$pdo->prepare($query);
 
         if (!$statement) {
@@ -80,15 +55,43 @@ final class Db
         return $statement;
     }
 
-    public static function insert_id()
+    public static function startTransaction()
     {
-        return mysqli_insert_id(static::$link);
+        if (self::$origAutocommit !== null) {
+            error_response('Transaction already open', 500);
+        }
+
+        $result = static::succeed("show variables where Variable_name = 'autocommit'", [], 'Error starting transaction (1)');
+        $autocommit = $result->fetch(PDO::FETCH_ASSOC);
+
+        if (!is_array($autocommit) || !isset($autocommit['Value'])) {
+            error_response('Error starting transaction (2)', 500);
+        }
+
+        static::succeed('set autocommit = OFF');
+        static::succeed('start transaction');
+        self::$origAutocommit = $autocommit['Value'];
     }
 
-    public static function pdo_insert_id()
+    public static function commit()
     {
-        static::checkPdoLink();
+        if (self::$origAutocommit === null) {
+            error_response('No transaction open', 500);
+        }
 
-        return static::$pdo->lastInsertId();
+        static::succeed('commit');
+        static::succeed('SET autocommit = ' . self::$origAutocommit);
+        self::$origAutocommit = null;
+    }
+
+    public static function rollback()
+    {
+        if (self::$origAutocommit === null) {
+            error_response('No transaction open', 500);
+        }
+
+        static::succeed('rollback');
+        static::succeed('SET autocommit = ' . self::$origAutocommit);
+        self::$origAutocommit = null;
     }
 }
