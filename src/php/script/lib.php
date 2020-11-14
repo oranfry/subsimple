@@ -24,11 +24,16 @@ function route()
         die();
     }
 
-    $routerclass = @Config::get()->router;
+    if (!with_plugins(function($plugin_dir, $d) use (&$routerclass) {
+        $routerfile = $plugin_dir . '/router.php';
 
-    if (!$routerclass) {
+        if (file_exists($routerfile)) {
+            $routerclass = require $routerfile;
+            return true;
+        }
+    })) {
         error_response('Router not specified');
-    }
+    };
 
     if (!class_exists($routerclass)) {
         error_response('Specified router class does not exist');
