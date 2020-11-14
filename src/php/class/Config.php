@@ -5,15 +5,21 @@ final class Config
 
     public static function set($config)
     {
-        if (self::$instance !== null) {
+        if (static::$instance !== null) {
             die('Only one config allowed');
         }
 
-        self::$instance = $config;
+        static::$instance = $config;
+    }
+
+    public static function replace($config)
+    {
+        static::$instance = null;
+        static::set($config);
     }
 
     public static function get()
     {
-        return self::$instance;
+        return static::$instance;
     }
 }
