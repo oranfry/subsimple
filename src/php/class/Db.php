@@ -33,7 +33,7 @@ final class Db
         $stmt = static::prepare($query);
 
         if (!$stmt->execute($params)) {
-            if ($origAutocommit !== null) {
+            if (self::$origAutocommit !== null) {
                 static::rollback();
             }
 
