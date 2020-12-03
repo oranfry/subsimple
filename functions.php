@@ -51,7 +51,7 @@ function load_plugin_libs()
 function init_plugins()
 {
     with_plugins(function($dir, $name) {
-        $init_func = 'init_' . $name;
+        $init_func = 'init_' . ($name ?? 'app');
 
         if (function_exists($init_func)) {
             $init_func();
