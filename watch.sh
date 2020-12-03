@@ -1,5 +1,6 @@
+apphome="$(cd "$(dirname "$0")/../.." && pwd)"
 thisdir="$(cd "$(dirname "$0")" && pwd)"
-watchdir="$(cd "$(dirname "$0")/../.." && pwd)"
+watchdir="$(cd "$(dirname "$0")/../../src" && pwd)"
 echo "watching ${watchdir}"
 
 inotifywait -r -m "${watchdir}" 2>/dev/null | while read message; do
@@ -12,6 +13,6 @@ inotifywait -r -m "${watchdir}" 2>/dev/null | while read message; do
     fi
 
     echo -n "building..."
-    php "${thisdir}/build.php"
+    php "${apphome}/dobuild.php"
     echo "done"
 done
