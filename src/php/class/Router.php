@@ -40,7 +40,7 @@ class Router
             $page_params = [];
 
             foreach ($groups as $i => $group) {
-                if (!isset($params[$i])) {
+                if (!array_key_exists($i, $params)) {
                     error_response('Routing error', 500);
                 }
 

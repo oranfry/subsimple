@@ -1,13 +1,4 @@
 <?php
-if (!defined('AUTHSCHEME')) {
-    define('AUTHSCHEME', 'cookie');
-}
-
-if (!in_array(AUTHSCHEME, ['cookie', 'header', 'none'])) {
-    error_log('AUTHSCHEME should be set to "cookie", "header" or "none"');
-    die();
-}
-
 function route()
 {
     global $argv;
@@ -43,9 +34,22 @@ function route()
         error_response('Not set up', 500);
     }
 
-    if ((!defined('NOAUTH') || !NOAUTH) && AUTHSCHEME == 'header' && !@getallheaders()['X-Auth']) {
-        error_response('Missing auth header', 403);
+    if (!defined('AUTHSCHEME')) {
+        define('AUTHSCHEME', 'cookie');
     }
+
+    if (!in_array(AUTHSCHEME, ['cookie', 'header', 'onetime', 'none', 'deny'])) {
+        error_log('AUTHSCHEME should be set to "cookie", "header", "onetime", "none", or "deny"');
+        die();
+    }
+
+    with_plugins(function($dir, $name) {
+        $init_func = 'postroute_' . ($name ?? 'app');
+
+        if (function_exists($init_func)) {
+            $init_func();
+        }
+    });
 }
 
 function do_controller()

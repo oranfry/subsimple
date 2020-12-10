@@ -79,9 +79,11 @@ function define_autoloader()
     });
 }
 
-function error_response($message, $code = 400, $info = [])
+function error_response($message, $code = null, $info = [])
 {
-    http_response_code($code);
+    if (php_sapi_name() != 'cli') {
+        http_response_code($code ?? 400);
+    }
 
     $error = $message;
     $layout = defined('LAYOUT') ? LAYOUT : 'main';
@@ -96,5 +98,10 @@ function error_response($message, $code = 400, $info = [])
     }
 
     echo "An error occurred but we are unable to display any details<br>";
+
+    if (php_sapi_name() == 'cli') {
+        die($code ?? 1);
+    }
+
     die();
 }
