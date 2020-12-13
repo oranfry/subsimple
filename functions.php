@@ -29,7 +29,7 @@ function with_plugins($callback)
 
     closedir($h);
 
-    if (defined('CUSTOM_PLUGINS')) {
+    if (!$result && defined('CUSTOM_PLUGINS')) {
         foreach (CUSTOM_PLUGINS as $plugin_dir) {
             if ($callback($plugin_dir, basename($plugin_dir))) {
                 $result = true;
@@ -104,4 +104,20 @@ function error_response($message, $code = null, $info = [])
     }
 
     die();
+}
+
+function search_plugins($file)
+{
+    $found = null;
+
+    with_plugins(function($dir, $name) use ($file, &$found) {
+        $_filepath = $dir . '/' . $file;
+
+        if (file_exists($_filepath)) {
+            $found = $_filepath;
+            return true;
+        }
+    });
+
+    return $found;
 }

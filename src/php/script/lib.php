@@ -30,7 +30,7 @@ function route()
         error_response('Not found', 404);
     }
 
-    if (!defined('PAGE') || !file_exists(APP_HOME . '/src/php/controller/' . PAGE . '.php')) {
+    if (!defined('PAGE') || !search_plugins('src/php/controller/' . PAGE . '.php')) {
         error_response('Not set up', 500);
     }
 
@@ -54,14 +54,30 @@ function route()
 
 function do_controller()
 {
-    return require APP_HOME . '/src/php/controller/' . PAGE . '.php';
+    return require search_plugins('src/php/controller/' . PAGE . '.php');
 }
 
 function do_layout($viewdata)
 {
     extract((array) $viewdata);
 
-    require APP_HOME . '/src/php/layout/' . LAYOUT . '.php';
+    $layout_file = null;
+
+    $result = with_plugins(function($dir, $name) use (&$layout_file) {
+        $_layout_file = $dir . '/src/php/layout/' . LAYOUT . '.php';
+
+        if (file_exists($_layout_file) && !is_dir($_layout_file)) {
+            $layout_file = $_layout_file;
+            return true;
+        }
+    });
+
+    if (!$result) {
+        error_log('Could not find a layout called "' . LAYOUT . '"');
+        error_response('Internal server error');
+    }
+
+    require $layout_file;
 }
 
 function map_objects($objectArray, $property)

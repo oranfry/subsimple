@@ -2,6 +2,8 @@
 require __DIR__ . '/functions.php';
 define_autoloader();
 Config::set(require APP_HOME . '/config.php');
+load_plugin_libs();
+init_plugins();
 
 $latests = [];
 
@@ -79,10 +81,22 @@ foreach ($types as $type => $props) {
     }
 
     foreach ($props->files as $file) {
-        $filepath = APP_HOME . '/' . preg_replace('/.*:/', '', $file);
+        $filepath = null;
+
+        with_plugins(function($pdir, $name) use ($file, &$filepath) {
+            $_file_path = "{$pdir}/" . preg_replace('/.*:/', '', $file);
+
+            if (!file_exists($_file_path) || is_dir($_file_path)) {
+                return;
+            }
+
+            $filepath = $_file_path;
+
+            return true;
+        });
 
         if (!file_exists($filepath)) {
-            echo "skipping {$type} (file {$filepath} does not exist)\n";
+            echo "skipping {$type} (file {$file} does not exist)\n";
             continue 2;
         }
 
