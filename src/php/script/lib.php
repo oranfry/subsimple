@@ -30,8 +30,12 @@ function route()
         error_response('Not found', 404);
     }
 
-    if (!defined('PAGE') || !search_plugins('src/php/controller/' . PAGE . '.php')) {
-        error_response('Not set up', 500);
+    if (!defined('PAGE')) {
+        error_response('Not set up (1)', 500);
+    }
+
+    if (!search_plugins('src/php/controller/' . PAGE . '.php')) {
+        error_response('Not set up (2)', 500);
     }
 
     if (!defined('AUTHSCHEME')) {
@@ -162,6 +166,10 @@ function date_shift($date, $offset)
 function var_die($var)
 {
     $function = implode('_', ['var', 'dump']);
+
+    if (PHP_SAPI != 'cli') {
+        echo '<pre>';
+    }
 
     $function($var);
     die('-');

@@ -88,7 +88,8 @@ function error_response($message, $code = null, $info = [])
     $error = $message;
     $layout = defined('LAYOUT') ? LAYOUT : 'main';
 
-    error_log("{$code} {$message} " . var_export(debug_backtrace(), 1));
+    error_log("{$code} {$message}");
+    error_log(var_export(debug_backtrace(), 1));
 
     foreach ([APP_HOME . '/src/php/layout/' . $layout . '-error.php', APP_HOME . '/src/php/layout/error.php'] as $layout_file) {
         if (file_exists($layout_file)) {

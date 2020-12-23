@@ -41,7 +41,7 @@ class Router
 
             foreach ($groups as $i => $group) {
                 if (!array_key_exists($i, $params)) {
-                    error_response('Routing error', 500);
+                    error_response('Routing error: please provide URL argument name', 500);
                 }
 
                 if ($params[$i]) {
