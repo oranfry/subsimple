@@ -9,16 +9,7 @@ function route()
 
     $path = isset($_SERVER["REQUEST_URI"]) ? strtok($_SERVER["REQUEST_URI"], '?') : implode(' ', $argv);
 
-    if (!with_plugins(function($plugin_dir, $d) use (&$routerclass) {
-        $routerfile = $plugin_dir . '/router.php';
-
-        if (file_exists($routerfile)) {
-            $routerclass = require $routerfile;
-            return true;
-        }
-    })) {
-        error_response('Router not specified');
-    };
+    $routerclass = @Config::get()->router;
 
     if (!class_exists($routerclass)) {
         error_response('Specified router class does not exist');
@@ -27,7 +18,7 @@ function route()
     $router = new $routerclass();
 
     if (!$router->match($path)) {
-        error_response('Not found', 404);
+        error_response("Not found: {$path}", 404);
     }
 
     if (!defined('PAGE')) {
@@ -35,7 +26,7 @@ function route()
     }
 
     if (!search_plugins('src/php/controller/' . PAGE . '.php')) {
-        error_response('Not set up (2)', 500);
+        error_response('Not set up (2): ' . PAGE, 500);
     }
 
     if (!defined('AUTHSCHEME')) {
@@ -63,8 +54,6 @@ function do_controller()
 
 function do_layout($viewdata)
 {
-    extract((array) $viewdata);
-
     $layout_file = null;
 
     $result = with_plugins(function($dir, $name) use (&$layout_file) {
@@ -80,6 +69,8 @@ function do_layout($viewdata)
         error_log('Could not find a layout called "' . LAYOUT . '"');
         error_response('Internal server error');
     }
+
+    extract((array) $viewdata);
 
     require $layout_file;
 }

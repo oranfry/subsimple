@@ -7,7 +7,13 @@ if (!defined('APP_HOME')) {
 require __DIR__ . '/functions.php';
 
 define_autoloader();
-Config::set(require APP_HOME . '/config.php');
+
+(function(){
+    $config = require APP_HOME . '/config.php';
+
+    Config::set($config);
+})();
+
 
 load_plugin_libs();
 init_plugins();

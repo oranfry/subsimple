@@ -6,39 +6,15 @@ function with_plugins($callback)
         return true;
     }
 
-    $plugins_dir = APP_HOME . '/plugins';
-    $h = opendir($plugins_dir);
-    $result = false;
-
-    while ($d = readdir($h)) {
-        if (preg_match('/^\./', $d)) {
-            continue;
-        }
-
-        $plugin_dir = $plugins_dir . '/' . $d;
-
-        if (!is_dir($plugin_dir)) {
-            continue;
-        }
-
-        if ($callback($plugin_dir, $d)) {
-            $result = true;
-            break;
-        }
-    }
-
-    closedir($h);
-
-    if (!$result && defined('CUSTOM_PLUGINS')) {
-        foreach (CUSTOM_PLUGINS as $plugin_dir) {
+    if (defined('PLUGINS')) {
+        foreach (PLUGINS as $plugin_dir) {
             if ($callback($plugin_dir, basename($plugin_dir))) {
-                $result = true;
-                break;
+                return true;
             }
         }
     }
 
-    return $result;
+    return false;
 }
 
 function load_plugin_libs()

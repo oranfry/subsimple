@@ -6,36 +6,50 @@ class Router
     public static function match($path)
     {
         foreach (static::$routes as $route => $params) {
-            if (!preg_match('/^(GET|POST|DELETE)\s+(\S+)$/', $route, $groups) && !preg_match('/^(CLI)\s+(.*)$/', $route, $groups)) {
+            if (!preg_match('/^(GET|POST|DELETE|HTTP)\s+(\S+)$/', $route, $groups) && !preg_match('/^(CLI)\s+(.*)$/', $route, $groups)) {
                 error_response("Invalid route: {$route}");
             }
 
             list(, $method, $pattern) = $groups;
 
-            if ($method != ($_SERVER['REQUEST_METHOD'] ?? 'CLI')) {
+            if ($method != ($_SERVER['REQUEST_METHOD'] ?? 'CLI') && ($method != 'HTTP' || !@$_SERVER['REQUEST_METHOD'])) {
                 continue;
             }
 
             if ($method == 'CLI') {
-                $routeparts = explode(' ', $pattern);
-                $pathparts = explode(' ', $path);
+                if ($pattern == '*') {
+                    $groups = ['CLI'];
+                } else {
+                    $routeparts = explode(' ', $pattern);
+                    $pathparts = explode(' ', $path);
 
-                if (count($routeparts) != count($pathparts)) {
-                    continue;
-                }
-
-                foreach ($routeparts as $i => $routepart) {
-                    if (!preg_match('@' . str_replace('@', '\@', $routepart) . '@', $pathparts[$i])) {
-                        continue 2;
+                    if (count($routeparts) != count($pathparts)) {
+                        continue;
                     }
-                }
 
-                $groups = array_merge(['CLI'], $pathparts);
+                    foreach ($routeparts as $i => $routepart) {
+                        if (!preg_match('@' . str_replace('@', '\@', $routepart) . '@', $pathparts[$i])) {
+                            continue 2;
+                        }
+                    }
+
+                    $groups = array_merge(['CLI'], $pathparts);
+                }
             } elseif (!preg_match("@^{$pattern}$@", $path, $groups)) {
                 continue;
             }
 
             array_shift($groups);
+
+            if (isset($params['FORWARD'])) {
+                $forwardpath = $path;
+
+                if (isset($params['EAT'])) {
+                    $forwardpath = preg_replace('@' . $params['EAT'] . '@', @$params['PREPEND'] ?? '', $path);
+                }
+
+                return $params['FORWARD']::match($forwardpath);
+            }
 
             $page_params = [];
 

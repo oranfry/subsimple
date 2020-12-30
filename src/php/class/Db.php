@@ -6,15 +6,16 @@ final class Db
 
     public static function connect()
     {
+        $config = Config::get();
         $connection_string =
             "mysql:" .
-            "host=" . (@Config::get()->db_creds->host ?: '127.0.0.1') . ';' .
-            "dbname=" . Config::get()->db_creds->db;
+            "host=" . (@$config->db_creds->host ?: '127.0.0.1') . ';' .
+            "dbname=" . $config->db_creds->db;
 
         static::$pdo = new PDO(
             $connection_string,
-            Config::get()->db_creds->username,
-            Config::get()->db_creds->password
+            $config->db_creds->username,
+            $config->db_creds->password
         );
 
         if (!static::$pdo) {
