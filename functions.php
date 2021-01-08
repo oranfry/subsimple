@@ -67,14 +67,15 @@ function error_response($message, $code = null, $info = [])
     error_log("{$code} {$message}");
     error_log(var_export(debug_backtrace(), 1));
 
-    foreach ([APP_HOME . '/src/php/layout/' . $layout . '-error.php', APP_HOME . '/src/php/layout/error.php'] as $layout_file) {
-        if (file_exists($layout_file)) {
-            require $layout_file;
-            die();
-        }
+    $layout_file = search_plugins('src/php/layout/' . $layout . '-error.php') ?? search_plugins('src/php/layout/error.php');
+
+    if (file_exists($layout_file)) {
+        require $layout_file;
+
+        die();
     }
 
-    echo "An error occurred but we are unable to display any details<br>";
+    echo "An error occurred but we are unable to display any details\n";
 
     if (php_sapi_name() == 'cli') {
         die($code ?? 1);
