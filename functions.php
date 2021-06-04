@@ -1,39 +1,4 @@
 <?php
-function with_plugins($callback)
-{
-    // "base" plugin
-    if ($callback(APP_HOME, null)) {
-        return true;
-    }
-
-    if (defined('PLUGINS')) {
-        foreach (PLUGINS as $plugin_dir) {
-            if ($callback($plugin_dir, basename($plugin_dir))) {
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-
-function load_plugin_libs()
-{
-    with_plugins(function($dir, $name) {
-        @include $dir . '/src/php/script/lib.php';
-    });
-}
-
-function init_plugins()
-{
-    with_plugins(function($dir, $name) {
-        $init_func = 'init_' . ($name ?? 'app');
-
-        if (function_exists($init_func)) {
-            $init_func();
-        }
-    });
-}
 
 function define_autoloader()
 {
@@ -84,6 +49,24 @@ function error_response($message, $code = null, $info = [])
     die();
 }
 
+function init_plugins()
+{
+    with_plugins(function($dir, $name) {
+        $init_func = 'init_' . ($name ?? 'app');
+
+        if (function_exists($init_func)) {
+            $init_func();
+        }
+    });
+}
+
+function load_plugin_libs()
+{
+    with_plugins(function($dir, $name) {
+        @include $dir . '/src/php/script/lib.php';
+    });
+}
+
 function search_plugins($file)
 {
     $found = null;
@@ -98,4 +81,28 @@ function search_plugins($file)
     });
 
     return $found;
+}
+
+
+function value($closure)
+{
+    return call_user_func_array($closure, array_splice(func_get_args(), 1));
+}
+
+function with_plugins($callback)
+{
+    // "base" plugin
+    if ($callback(APP_HOME, null)) {
+        return true;
+    }
+
+    if (defined('PLUGINS')) {
+        foreach (PLUGINS as $plugin_dir) {
+            if ($callback($plugin_dir, basename($plugin_dir))) {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
