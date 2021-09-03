@@ -1,18 +1,16 @@
 <?php
 require __DIR__ . '/functions.php';
+require __DIR__ . '/src/php/class/Config.php';
+
+Config::set(require APP_HOME . '/config.php');
+
+define('PLUGINS', array_unique(array_merge(@$plugins ?: [], @Config::get()->requires ?? [])));
+
 define_autoloader();
-
-(function(){
-    $config = require APP_HOME . '/config.php';
-
-    Config::set($config);
-})();
-
 load_plugin_libs();
 init_plugins();
 
 $latests = [];
-
 $types = json_decode(file_get_contents(APP_HOME . '/build/collect.json'));
 
 foreach ($types as $type => $props) {
