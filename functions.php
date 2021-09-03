@@ -22,8 +22,16 @@ function define_autoloader()
 
 function error_response($message, $code = null, $info = [])
 {
+    if ($code === null) {
+        $code = php_sapi_name() == 'cli' ? 1 : 400;
+    }
+
     if (php_sapi_name() != 'cli') {
-        http_response_code($code ?? 400);
+        http_response_code($code);
+    }
+
+    if (!is_string($message)) {
+        $message = var_export($message, true);
     }
 
     $error = $message;
@@ -32,21 +40,18 @@ function error_response($message, $code = null, $info = [])
     error_log("{$code} {$message}");
     error_log(var_export(debug_backtrace(), 1));
 
-    $layout_file = search_plugins('src/php/layout/' . $layout . '-error.php') ?? search_plugins('src/php/layout/error.php');
+    $layout_file = search_plugins('src/php/error/' . $layout . '.php') ??
+        search_plugins('src/php/error/fallback.php');
 
     if (file_exists($layout_file)) {
         require $layout_file;
 
-        die();
+        die(php_sapi_name() == 'cli' ? ($code ?? 1) : null);
     }
 
     echo "An error occurred but we are unable to display any details\n";
 
-    if (php_sapi_name() == 'cli') {
-        die($code ?? 1);
-    }
-
-    die();
+    die(php_sapi_name() == 'cli' ? ($code ?? 1) : null);
 }
 
 function init_plugins()
