@@ -149,6 +149,36 @@ function filter_objects($objectArray, $property, $cmp = 'exists', $value = null)
     );
 }
 
+function find_objects($objectArray, $property, $cmp = 'exists', $values = [])
+{
+    return array_map(function($value) use ($objectArray, $property, $cmp) {
+        return find_object($objectArray, $property, $cmp, $value);
+    }, $values);
+}
+
+function find_object($objectArray, $property, $cmp = 'exists', $value)
+{
+    $found = filter_objects($objectArray, $property, $cmp, $value);
+
+    return reset($found);
+}
+
+function indicies_of_objects($objectArray, $property, $cmp = 'exists', $values = [])
+{
+    return array_map(function($value) use ($objectArray, $property, $cmp) {
+        return index_of_object($objectArray, $property, $cmp = 'exists', $value);
+    }, $values);
+}
+
+function index_of_object($objectArray, $property, $cmp = 'exists', $value)
+{
+    foreach ($objectArray as $index => $object) {
+        if (count(filter_objects([$object], $property, $cmp, $value))) {
+            return $index;
+        }
+    }
+}
+
 function date_shift($date, $offset)
 {
     return date('Y-m-d', strtotime($offset, strtotime($date)));
