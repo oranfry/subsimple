@@ -6,17 +6,34 @@ class Router
     public static function match($path)
     {
         foreach (static::$routes as $route => $params) {
-            if (!preg_match('/^(GET|POST|DELETE|HTTP)\s+(\S+)$/', $route, $groups) && !preg_match('/^(CLI)\s+(.*)$/', $route, $groups)) {
+            $method_pattern = implode('|', ['GET', 'POST', 'DELETE', 'PUT', 'HTTP']);
+            $methods_pattern = '(?:' . $method_pattern . ')(?:\|(?:' . $method_pattern . '))*';
+            $http_pattern = '/^(' . $methods_pattern . ')\s+(\S+)$/';
+            $cli_pattern = '/^(CLI)\s+(.*)$/';
+
+            // validate route
+
+            if (!preg_match($http_pattern, $route, $groups) &&
+                !preg_match($cli_pattern, $route, $groups)
+            ) {
                 error_response("Invalid route: {$route}");
             }
 
-            list(, $method, $pattern) = $groups;
+            list(, $method_list, $pattern) = $groups;
 
-            if ($method != ($_SERVER['REQUEST_METHOD'] ?? 'CLI') && ($method != 'HTTP' || !@$_SERVER['REQUEST_METHOD'])) {
+            $route_methods = explode('|', $method_list);
+
+            // check that method matches
+
+            if (!in_array(@$_SERVER['REQUEST_METHOD'] ?? 'CLI', $route_methods) &&
+                (!in_array('HTTP', $route_methods) || !@$_SERVER['REQUEST_METHOD'])
+            ) {
                 continue;
             }
 
-            if ($method == 'CLI') {
+            // check that pattern matches
+
+            if (count($route_methods) == 1 && reset($route_methods) == 'CLI') {
                 if ($pattern == '*') {
                     $groups = ['CLI'];
                 } else {
@@ -38,6 +55,8 @@ class Router
             } elseif (!preg_match("@^{$pattern}$@", $path, $groups)) {
                 continue;
             }
+
+            // we have found a match
 
             array_shift($groups);
 
