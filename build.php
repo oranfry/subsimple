@@ -11,6 +11,25 @@ load_plugin_libs();
 init_plugins();
 
 $latests = [];
+
+foreach (['collect', 'combine'] as $file) {
+    if (!file_exists($path = APP_HOME . '/build/' . $file . '.json')) {
+        continue;
+    }
+
+    $types = json_decode(file_get_contents($path));
+
+    foreach ($types as $type => $props) {
+        if (!@$props->into) {
+            continue;
+        }
+
+        $into = APP_HOME . '/' . $props->into;
+
+        shell_exec("rm -rf \"{$into}\"");
+    }
+}
+
 $types = json_decode(file_get_contents(APP_HOME . '/build/collect.json'));
 
 foreach ($types as $type => $props) {
@@ -43,8 +62,7 @@ foreach ($types as $type => $props) {
 
     $into = APP_HOME . '/' . $props->into;
 
-    shell_exec("rm -rf \"{$into}\"");
-    mkdir($into);
+    @mkdir($into);
 
     foreach ($schedule as $filepath) {
         if (preg_match('/(.*)(\..*)$/', basename($filepath), $groups)) {
@@ -68,6 +86,8 @@ $types = json_decode(file_get_contents(APP_HOME . '/build/combine.json'));
 foreach ($types as $type => $props) {
     $filedata = "";
     $latest = 0;
+    $wrapper_open = null;
+    $wrapper_close = null;
 
     if (!@$props->into) {
         echo "skipping {$type} (no into defined)\n";
@@ -84,46 +104,45 @@ foreach ($types as $type => $props) {
         continue;
     }
 
+    if (@$props->wrapper->open) {
+        $wrapper_open = search_plugins($props->wrapper->open);
+    }
+
+    if (@$props->wrapper->close) {
+        $wrapper_close = search_plugins($props->wrapper->close);
+    }
+
     foreach ($props->files as $file) {
-        $filepath = null;
-
-        with_plugins(function($pdir, $name) use ($file, &$filepath) {
-            $_file_path = "{$pdir}/" . preg_replace('/.*:/', '', $file);
-
-            if (!file_exists($_file_path) || is_dir($_file_path)) {
-                return;
-            }
-
-            $filepath = $_file_path;
-
-            return true;
-        });
+        $filepath = search_plugins(preg_replace('/.*:/', '', $file));
 
         if (!file_exists($filepath)) {
             echo "skipping {$type} (file {$file} does not exist)\n";
             continue 2;
         }
 
-        if (preg_match('/^php:(.*)/', $file, $groups)) {
-            ob_start();
+        ob_start();
 
+        @include $wrapper_open;
+
+        if (preg_match('/^php:.*/', $file)) {
             require $filepath;
-
-            $dfiledata = ob_get_contents();
-            $filedata .= $dfiledata;
-
-            ob_end_clean();
         } else {
-            $filedata .= file_get_contents($filepath);
+            readfile($filepath);
         }
+
+        @include $wrapper_close;
+
+        $dfiledata = ob_get_contents();
+        $filedata .= $dfiledata;
+
+        ob_end_clean();
 
         $latest = max(filemtime($filepath), $latest);
     }
 
     $into = APP_HOME . '/' . $props->into;
 
-    shell_exec("rm -rf \"{$into}\"");
-    mkdir($into);
+    @mkdir($into);
     file_put_contents($into . '/' . $props->basename . '.' . $latest . '.' . $props->extension, $filedata);
 
     $latests[$type] = $latest;
