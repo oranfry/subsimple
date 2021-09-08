@@ -91,6 +91,10 @@ function filter_objects($objectArray, $property, $cmp = 'exists', $value = null)
         array_filter(
             $objectArray,
             function ($o) use ($property, $cmp, $value) {
+                if (!is_object($o)) {
+                    error_response('non object given to filter_objects()');
+                }
+
                 if (!property_exists($o, $property)) {
                     if ($cmp == 'notexists') {
                         return true;
@@ -170,7 +174,7 @@ function indicies_of_objects($objectArray, $property, $cmp = 'exists', $values =
     }, $values);
 }
 
-function index_of_object($objectArray, $property, $cmp = 'exists', $value)
+function index_of_object($objectArray, $property, $cmp = 'exists', $value = null)
 {
     foreach ($objectArray as $index => $object) {
         if (count(filter_objects([$object], $property, $cmp, $value))) {
