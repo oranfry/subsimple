@@ -49,7 +49,18 @@ function route()
 
 function do_controller()
 {
-    return require search_plugins('src/php/controller/' . PAGE . '.php');
+    $data = [];
+
+    if (is_file($app_controller = APP_HOME . '/src/php/controller/app.php')) {
+        $_data = require $app_controller;
+
+        if (is_array($_data)) {
+            extract($_data);
+            $data = $_data;
+        }
+    }
+
+    return array_merge($data, require search_plugins('src/php/controller/' . PAGE . '.php'));
 }
 
 function do_layout($viewdata)
