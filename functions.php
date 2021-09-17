@@ -96,9 +96,13 @@ function search_plugins($file)
 }
 
 
-function value($closure)
+function value($something)
 {
-    return call_user_func_array($closure, array_splice(func_get_args(), 1));
+    if (is_callable($something)) {
+        return ($something)();
+    }
+
+    return $something;
 }
 
 function with_plugins($callback)
