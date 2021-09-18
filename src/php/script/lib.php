@@ -49,45 +49,33 @@ function route()
 
 function do_controller()
 {
-    $data = [];
+    return (function () {
+        $_controller_data = [];
 
-    // app controller
+        // app controller
 
-    if (is_file($app_controller = APP_HOME . '/src/php/controller/app.php')) {
-        $_data = (function () use ($app_controller) {
-            return require $app_controller;
-        })();
+        if (is_file($_app_controller = APP_HOME . '/src/php/controller/app.php')) {
+            $_app_controller_data = require $_app_controller;
 
-        if (!is_array($_data) && $_data !== null) {
-            error_response('app controller should return an array or null');
+            if (!is_array($_app_controller_data)) {
+                error_response('app controller should return an array');
+            }
+
+            $_controller_data = $_app_controller_data;
         }
 
-        if (is_array($_data)) {
-            $data = $_data;
-        } else {
-            error_log('fyi app controller returned null');
+        // page controller
+
+        $_page_controller_data = require search_plugins('src/php/controller/' . PAGE . '.php');
+
+        if (!is_array($_page_controller_data)) {
+            error_response('page controller should return an array');
         }
-    }
 
-    // page controller
+        $_controller_data = array_merge($_controller_data, $_page_controller_data);
 
-    $_data = (function () use ($data) {
-        extract($data);
-
-        return require search_plugins('src/php/controller/' . PAGE . '.php');
+        return $_controller_data;
     })();
-
-    if (!is_array($_data) && $_data !== null) {
-        error_response('page controller should return an array or null');
-    }
-
-    if (is_array($_data)) {
-        $data = array_merge($data, $_data);
-    } else {
-        error_log('fyi ' . PAGE . ' controller returned null');
-    }
-
-    return $data;
 }
 
 function do_layout($viewdata)
