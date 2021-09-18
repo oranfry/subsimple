@@ -51,16 +51,43 @@ function do_controller()
 {
     $data = [];
 
+    // app controller
+
     if (is_file($app_controller = APP_HOME . '/src/php/controller/app.php')) {
-        $_data = require $app_controller;
+        $_data = (function () use ($app_controller) {
+            return require $app_controller;
+        })();
+
+        if (!is_array($_data) && $_data !== null) {
+            error_response('app controller should return an array or null');
+        }
 
         if (is_array($_data)) {
-            extract($_data);
             $data = $_data;
+        } else {
+            error_log('fyi app controller returned null');
         }
     }
 
-    return array_merge($data, require search_plugins('src/php/controller/' . PAGE . '.php'));
+    // page controller
+
+    $_data = (function () use ($data) {
+        extract($data);
+
+        return require search_plugins('src/php/controller/' . PAGE . '.php');
+    })();
+
+    if (!is_array($_data) && $_data !== null) {
+        error_response('page controller should return an array or null');
+    }
+
+    if (is_array($_data)) {
+        $data = array_merge($data, $_data);
+    } else {
+        error_log('fyi ' . PAGE . ' controller returned null');
+    }
+
+    return $data;
 }
 
 function do_layout($viewdata)
@@ -88,11 +115,84 @@ function do_layout($viewdata)
 
 function map_objects($objectArray, $property)
 {
+    if (strpos($property, '->') !== 0 && strpos($property, '[') !== 0) {
+        $property = '->' . $property;
+    }
+
+    $parts = [];
+    $matches = null;
+
+    while (preg_match('/^(->)(@)?([^[-]+)/', $property, $matches) || preg_match('/^(\[)(@)?([^[]+)\]/', $property, $matches)) {
+        $parts[] = (object) [
+            'type' => $matches[1] == '->' ? 'object' : 'array',
+            'prop' => $matches[3],
+            'safely' => $matches[2] == '@',
+        ];
+
+        $property = substr($property, strlen($matches[0]));
+    }
+
+    if ($property) {
+        error_response('map_objects: invalid property expression');
+    }
+
     return array_map(
-        function ($o) use ($property) {
-            return $o->{$property};
+        function ($o) use ($parts) {
+            $return = &$o;
+
+            foreach ($parts as $part) {
+                if ($part->type == 'object') {
+                    if (!is_object($return)) {
+                        error_response('map_objects: not an object');
+                    }
+
+                    if (!in_array($part->prop, array_keys(get_object_vars($return)))) {
+                        if ($part->safely) {
+                            return null;
+                        }
+
+                        error_response('map_objects: object property does not exist: ' . $part->prop);
+                    }
+
+                    if (is_array($return->{$part->prop})) {
+                        $return = &$return->{$part->prop};
+                    } else {
+                        $return = $return->{$part->prop};
+                    }
+                } else {
+                    if (!is_array($return)) {
+                        error_response('map_objects: not an array');
+                    }
+
+                    if (!array_key_exists($part->prop, $return)) {
+                        if ($part->safely) {
+                            return null;
+                        }
+
+                        error_response('map_objects: array key does not exist: ' . $part->prop);
+                    }
+
+                    if (is_array($return[$part->prop])) {
+                        $return = &$return[$part->prop];
+                    } else {
+                        $return = $return[$part->prop];
+                    }
+                }
+            }
+
+            return $return;
         },
         $objectArray
+    );
+}
+
+function map_array($arrayArray, $property)
+{
+    return array_map(
+        function ($e) use ($property) {
+            return $e[$property];
+        },
+        $arrayArray
     );
 }
 
