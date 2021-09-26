@@ -45,10 +45,17 @@ function error_response($message, $code = null, $info = [])
     $layout = defined('LAYOUT') ? LAYOUT : 'main';
 
     error_log("{$code} {$message}");
-    error_log(var_export(debug_backtrace(), 1));
+
+    foreach (debug_backtrace() as $trace) {
+        error_log($trace['file'] . ':' . $trace['line'] . ' (' . (@$trace['function'] ?: 'unknown function') . ')');
+    }
 
     $layout_file = search_plugins('src/php/error/' . $layout . '.php') ??
         search_plugins('src/php/error/fallback.php');
+
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
 
     if (file_exists($layout_file)) {
         require $layout_file;
