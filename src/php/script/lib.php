@@ -259,11 +259,24 @@ function find_objects($objectArray, $property, $cmp = 'exists', $values = [])
     }, $values);
 }
 
-function find_object($objectArray, $property, $cmp = 'exists', $value)
+function find_object($objectArray, $property, $cmp = 'exists', $value = null)
 {
     $found = filter_objects($objectArray, $property, $cmp, $value);
 
     return reset($found);
+}
+
+function remove_object(&$objectArray, $property, $cmp = 'exists', $value = null)
+{
+    foreach ($objectArray as $key => $object) {
+        if ($removed = find_object([$object], $property, $cmp, $value)) {
+            unset($objectArray[$key]);
+
+            return $removed;
+        }
+    }
+
+    return false;
 }
 
 function indicies_of_objects($objectArray, $property, $cmp = 'exists', $values = [])
