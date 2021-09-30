@@ -79,6 +79,17 @@ function init_plugins()
     });
 }
 
+function deinit_plugins()
+{
+    with_plugins(function($dir, $name) {
+        $init_func = 'deinit_' . ($name ?? 'app');
+
+        if (function_exists($init_func)) {
+            $init_func();
+        }
+    });
+}
+
 function load_plugin_libs()
 {
     with_plugins(function($dir, $name) {

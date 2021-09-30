@@ -23,3 +23,5 @@ if (!defined('LAYOUT')) {
 }
 
 do_layout($viewdata);
+
+deinit_plugins();
