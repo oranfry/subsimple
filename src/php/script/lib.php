@@ -110,7 +110,12 @@ function map_objects($objectArray, $property)
     $parts = [];
     $matches = null;
 
-    while (preg_match('/^(->)(@)?([^[-]+)/', $property, $matches) || preg_match('/^(\[)(@)?([^[]+)\]/', $property, $matches)) {
+    while (preg_match('/^(->)(@)?([^[>]+)/', $property, $matches) || preg_match('/^(\[)(@)?([^[]+)\]/', $property, $matches)) {
+        if (substr($property, strlen($matches[0]) - 1, 2) == '->') {
+            $matches[0] = substr($matches[0], 0, strlen($matches[0]) - 1);
+            $matches[3] = substr($matches[3], 0, strlen($matches[3]) - 1);
+        }
+
         $parts[] = (object) [
             'type' => $matches[1] == '->' ? 'object' : 'array',
             'prop' => $matches[3],
