@@ -50,8 +50,8 @@ function error_response($message, $code = null, $info = [])
         error_log($trace['file'] . ':' . $trace['line'] . ' (' . (@$trace['function'] ?: 'unknown function') . ')');
     }
 
-    $layout_file = search_plugins('src/php/error/' . $layout . '.php') ??
-        search_plugins('src/php/error/fallback.php');
+    $fallback = 'fallback' . (php_sapi_name() == 'cli' ? '-cli' : null);
+    $layout_file = search_plugins('src/php/error/' . $layout . '.php') ?? search_plugins("src/php/error/$fallback.php");
 
     while (ob_get_level()) {
         ob_end_clean();
