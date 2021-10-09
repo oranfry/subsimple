@@ -224,6 +224,14 @@ function filter_objects($objectArray, $property, $cmp = 'exists', $value = null)
                         return !in_array('', $value) || in_array(null, $value);
                     }
 
+                    if ($cmp == 'null') {
+                        return true;
+                    }
+
+                    if ($cmp == 'notnull') {
+                        return false;
+                    }
+
                     return false; //unsupported comparison
                 }
 
@@ -249,6 +257,14 @@ function filter_objects($objectArray, $property, $cmp = 'exists', $value = null)
 
                 if ($cmp == 'notin') {
                     return !in_array($o->{$property}, $value);
+                }
+
+                if ($cmp == 'null') {
+                    return is_null($o->{$property});
+                }
+
+                if ($cmp == 'notnull') {
+                    return !is_null($o->{$property});
                 }
 
                 return false; //unsupported comparison
