@@ -13,7 +13,7 @@
 </style>
 
 <h1><?= $code ?></h1>
-<pre style="font-size: 1.4em"><?= is_string($error) ? $error : var_export($error, true); ?></pre>
+<pre style="font-size: 1.4em"><?= htmlspecialchars(is_string($error) ? $error : var_export($error, true)); ?></pre>
 
 <?php
 
@@ -22,7 +22,7 @@ if (!defined('SHOW_ERRORS') || !SHOW_ERRORS) {
 }
 
 foreach (debug_backtrace() as $i => $bt) {
-    echo '<div class="backtrace-line">';
+    echo '<div class="backtrace-line" style="max-height: 5em; overflow: hidden" onclick="this.style.maxHeight = \'\';">';
 
     if (@$bt['file']) {
         echo $bt['file'] . ':' . $bt['line'] . "\n";
@@ -35,7 +35,7 @@ foreach (debug_backtrace() as $i => $bt) {
             echo "(";
 
             foreach ($bt['args'] as $i => $arg) {
-                echo($i ? ', ' : '') . var_export($arg, 1);
+                echo($i ? ', ' : '') . htmlspecialchars(var_export($arg, 1));
             }
 
             echo ")";
