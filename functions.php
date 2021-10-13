@@ -47,7 +47,13 @@ function error_response($message, $code = null, $info = [])
     error_log("{$code} {$message}");
 
     foreach (debug_backtrace() as $trace) {
-        error_log($trace['file'] . ':' . $trace['line'] . ' (' . (@$trace['function'] ?: 'unknown function') . ')');
+        $location_description = implode(':', array_filter([@$trace['file'], @$trace['line']]));
+
+        if (@$trace['function']) {
+            $location_description .= ($location_description ? ' ': null) .  '(' . $trace['function'] . ')';
+        }
+
+        error_log($location_description);
     }
 
     $fallback = 'fallback' . (php_sapi_name() == 'cli' ? '-cli' : null);
