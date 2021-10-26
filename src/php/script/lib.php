@@ -101,7 +101,7 @@ function do_layout($viewdata)
     require $layout_file;
 }
 
-function map_objects($objectArray, $property)
+function parse_property_expression($property)
 {
     if (strpos($property, '->') !== 0 && strpos($property, '[') !== 0) {
         $property = '->' . $property;
@@ -126,151 +126,171 @@ function map_objects($objectArray, $property)
     }
 
     if ($property) {
-        error_response('map_objects: invalid property expression');
+        error_response('parse_property_expression: invalid property expression');
     }
 
-    return array_map(
-        function ($o) use ($parts) {
-            $return = &$o;
+    return $parts;
+}
 
-            foreach ($parts as $part) {
-                if ($part->type == 'object') {
-                    if (!is_object($return)) {
-                        error_response('map_objects: not an object');
-                    }
+function property_expression_exists($o, $property)
+{
+    return property_expression_value($o, $property, true);
+}
 
-                    if (!in_array($part->prop, array_keys(get_object_vars($return)))) {
-                        if ($part->safely) {
-                            return null;
-                        }
+function property_expression_value($o, $property, $existence_check = false)
+{
+    $return = &$o;
 
-                        error_response('map_objects: object property does not exist: ' . $part->prop);
-                    }
-
-                    if (is_array($return->{$part->prop})) {
-                        $return = &$return->{$part->prop};
-                    } else {
-                        $return = $return->{$part->prop};
-                    }
-                } else {
-                    if (!is_array($return)) {
-                        error_response('map_objects: not an array');
-                    }
-
-                    if (!array_key_exists($part->prop, $return)) {
-                        if ($part->safely) {
-                            return null;
-                        }
-
-                        error_response('map_objects: array key does not exist: ' . $part->prop);
-                    }
-
-                    if (is_array($return[$part->prop])) {
-                        $return = &$return[$part->prop];
-                    } else {
-                        $return = $return[$part->prop];
-                    }
-                }
+    foreach (parse_property_expression($property) as $part) {
+        if ($part->type == 'object') {
+            if (!is_object($return)) {
+                error_response('property_expression_value: not an object');
             }
 
-            return $return;
-        },
-        $objectArray
-    );
+            if (!in_array($part->prop, array_keys(get_object_vars($return)))) {
+                if ($existence_check) {
+                    return false;
+                }
+
+                if ($part->safely) {
+                    return null;
+                }
+
+                error_response('property_expression_value: object property does not exist: ' . $part->prop);
+            }
+
+            if (is_array($return->{$part->prop})) {
+                $return = &$return->{$part->prop};
+            } else {
+                $return = $return->{$part->prop};
+            }
+        } else {
+            if (!is_array($return)) {
+                error_response('property_expression_value: not an array');
+            }
+
+            if (!array_key_exists($part->prop, $return)) {
+                if ($existence_check) {
+                    return false;
+                }
+
+                if ($part->safely) {
+                    return null;
+                }
+
+                error_response('property_expression_value: array key does not exist: ' . $part->prop);
+            }
+
+            if (is_array($return[$part->prop])) {
+                $return = &$return[$part->prop];
+            } else {
+                $return = $return[$part->prop];
+            }
+        }
+    }
+
+    if ($existence_check) {
+        return true;
+    }
+
+    return $return;
+}
+
+function map_objects($objectArray, $property)
+{
+    $callback = function ($o) use ($property) {
+        return property_expression_value($o, $property);
+    };
+
+    return array_map($callback, $objectArray);
 }
 
 function map_array($arrayArray, $property)
 {
-    return array_map(
-        function ($e) use ($property) {
-            return $e[$property];
-        },
-        $arrayArray
-    );
+    $callback = function ($e) use ($property) {
+        return $e[$property];
+    };
+
+    return array_map($callback, $arrayArray);
 }
 
 function filter_objects($objectArray, $property, $cmp = 'exists', $value = null)
 {
-    return array_values(
-        array_filter(
-            $objectArray,
-            function ($o) use ($property, $cmp, $value) {
-                if (!is_object($o)) {
-                    error_response('non object given to filter_objects()');
-                }
+    return array_values(array_filter($objectArray, function ($o) use ($property, $cmp, $value) {
+        if (!is_object($o)) {
+            error_response('non object given to filter_objects()');
+        }
 
-                if (!property_exists($o, $property)) {
-                    if ($cmp == 'notexists') {
-                        return true;
-                    }
-
-                    if ($cmp == 'exists') {
-                        return false;
-                    }
-
-                    if ($cmp == 'is') {
-                        return !$value;
-                    }
-
-                    if ($cmp == 'not') {
-                        return (bool) $value;
-                    }
-
-                    if ($cmp == 'in') {
-                        return in_array('', $value) || in_array(null, $value);
-                    }
-
-                    if ($cmp == 'notin') {
-                        return !in_array('', $value) || in_array(null, $value);
-                    }
-
-                    if ($cmp == 'null') {
-                        return true;
-                    }
-
-                    if ($cmp == 'notnull') {
-                        return false;
-                    }
-
-                    return false; //unsupported comparison
-                }
-
-                if ($cmp == 'exists') {
-                    return true;
-                }
-
-                if ($cmp == 'notexists') {
-                    return false;
-                }
-
-                if ($cmp == 'is') {
-                    return $o->{$property} == $value;
-                }
-
-                if ($cmp == 'not') {
-                    return $o->{$property} != $value;
-                }
-
-                if ($cmp == 'in') {
-                    return in_array($o->{$property}, $value);
-                }
-
-                if ($cmp == 'notin') {
-                    return !in_array($o->{$property}, $value);
-                }
-
-                if ($cmp == 'null') {
-                    return is_null($o->{$property});
-                }
-
-                if ($cmp == 'notnull') {
-                    return !is_null($o->{$property});
-                }
-
-                return false; //unsupported comparison
+        if (!property_expression_exists($o, $property)) {
+            if ($cmp == 'notexists') {
+                return true;
             }
-        )
-    );
+
+            if ($cmp == 'exists') {
+                return false;
+            }
+
+            if ($cmp == 'is') {
+                return !$value;
+            }
+
+            if ($cmp == 'not') {
+                return (bool) $value;
+            }
+
+            if ($cmp == 'in') {
+                return in_array('', $value) || in_array(null, $value);
+            }
+
+            if ($cmp == 'notin') {
+                return !in_array('', $value) || in_array(null, $value);
+            }
+
+            if ($cmp == 'null') {
+                return true;
+            }
+
+            if ($cmp == 'notnull') {
+                return false;
+            }
+
+            return false; //unsupported comparison
+        }
+
+        if ($cmp == 'exists') {
+            return true;
+        }
+
+        if ($cmp == 'notexists') {
+            return false;
+        }
+
+        if ($cmp == 'is') {
+            return property_expression_value($o, $property) == $value;
+        }
+
+        if ($cmp == 'not') {
+            return property_expression_value($o, $property) != $value;
+        }
+
+        if ($cmp == 'in') {
+            return in_array(property_expression_value($o, $property), $value);
+        }
+
+        if ($cmp == 'notin') {
+            return !in_array(property_expression_value($o, $property), $value);
+        }
+
+        if ($cmp == 'null') {
+            return is_null(property_expression_value($o, $property));
+        }
+
+        if ($cmp == 'notnull') {
+            return !is_null(property_expression_value($o, $property));
+        }
+
+        return false; //unsupported comparison
+    }));
 }
 
 function find_objects($objectArray, $property, $cmp = 'exists', $values = [])
