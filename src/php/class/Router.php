@@ -64,7 +64,7 @@ class Router
                 $forwardpath = $path;
 
                 if (isset($params['EAT'])) {
-                    $forwardpath = preg_replace('@' . $params['EAT'] . '@', @$params['PREPEND'] ?? '', $path);
+                    $forwardpath = preg_replace('@' . $params['EAT'] . '@', @$params['PREPEND'] ?? '', $path) ?: '/';
                 }
 
                 return $params['FORWARD']::match($forwardpath);
