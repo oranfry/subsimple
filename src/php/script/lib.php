@@ -254,6 +254,10 @@ function filter_objects($objectArray, $property, $cmp = 'exists', $value = null)
                 return false;
             }
 
+            if ($cmp == 'matches') {
+                return preg_match($value, '');
+            }
+
             return false; //unsupported comparison
         }
 
@@ -287,6 +291,10 @@ function filter_objects($objectArray, $property, $cmp = 'exists', $value = null)
 
         if ($cmp == 'notnull') {
             return !is_null(property_expression_value($o, $property));
+        }
+
+        if ($cmp == 'matches') {
+            return preg_match($value, property_expression_value($o, $property));
         }
 
         return false; //unsupported comparison
