@@ -7,6 +7,26 @@ function dd()
     die();
 }
 
+function ddj()
+{
+    if (php_sapi_name() == 'cli') {
+        $wrap = 'identity';
+    } else {
+        $wrap = 'htmlspecialchars';
+        echo '<pre>';
+    }
+
+    foreach (func_get_args() as $i => $data) {
+        if ($i) {
+            echo "\n----------\n";
+        }
+
+        echo $wrap(json_encode($data, JSON_PRETTY_PRINT));
+    }
+
+    die();
+}
+
 function define_autoloader()
 {
     spl_autoload_register(function ($class_name) {
@@ -72,6 +92,11 @@ function error_response($message, $code = null, $info = [])
     echo "An error occurred but we are unable to display any details\n";
 
     die(php_sapi_name() == 'cli' ? ($code ?? 1) : null);
+}
+
+function identity($argument)
+{
+    return $argument;
 }
 
 function init_plugins()
