@@ -269,32 +269,34 @@ function filter_objects($objectArray, $property, $cmp = 'exists', $value = null)
             return false;
         }
 
+        $resolved = property_expression_value($o, $property);
+
         if ($cmp == 'is') {
-            return property_expression_value($o, $property) == $value;
+            return $resolved == $value;
         }
 
         if ($cmp == 'not') {
-            return property_expression_value($o, $property) != $value;
+            return $resolved != $value;
         }
 
         if ($cmp == 'in') {
-            return in_array(property_expression_value($o, $property), $value);
+            return in_array($resolved, $value);
         }
 
         if ($cmp == 'notin') {
-            return !in_array(property_expression_value($o, $property), $value);
+            return !in_array($resolved, $value);
         }
 
         if ($cmp == 'null') {
-            return is_null(property_expression_value($o, $property));
+            return is_null($resolved);
         }
 
         if ($cmp == 'notnull') {
-            return !is_null(property_expression_value($o, $property));
+            return !is_null($resolved);
         }
 
         if ($cmp == 'matches') {
-            return preg_match($value, property_expression_value($o, $property));
+            return preg_match($value, $resolved);
         }
 
         error_response('unsupported comparison');
