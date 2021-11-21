@@ -258,6 +258,14 @@ function filter_objects($objectArray, $property, $cmp = 'exists', $value = null)
                 return preg_match($value, '');
             }
 
+            if ($cmp == 'truthy') {
+                return false;
+            }
+
+            if ($cmp == 'falsy') {
+                return true;
+            }
+
             error_response('unsupported comparison');
         }
 
@@ -297,6 +305,14 @@ function filter_objects($objectArray, $property, $cmp = 'exists', $value = null)
 
         if ($cmp == 'matches') {
             return preg_match($value, $resolved);
+        }
+
+        if ($cmp == 'truthy') {
+            return (bool) $resolved;
+        }
+
+        if ($cmp == 'falsy') {
+            return !(bool) $resolved;
         }
 
         error_response('unsupported comparison');
