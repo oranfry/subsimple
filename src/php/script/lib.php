@@ -258,7 +258,7 @@ function filter_objects($objectArray, $property, $cmp = 'exists', $value = null)
                 return preg_match($value, '');
             }
 
-            return false; //unsupported comparison
+            error_response('unsupported comparison');
         }
 
         if ($cmp == 'exists') {
@@ -297,7 +297,7 @@ function filter_objects($objectArray, $property, $cmp = 'exists', $value = null)
             return preg_match($value, property_expression_value($o, $property));
         }
 
-        return false; //unsupported comparison
+        error_response('unsupported comparison');
     }));
 }
 
