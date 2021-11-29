@@ -74,6 +74,7 @@ foreach ($types as $type => $props) {
         }
 
         $dest = $into . '/' . $filename . '.' . $latest . $ext;
+        @mkdir(dirname($dest), 0777, true);
 
         shell_exec("cp '{$filepath}' '{$dest}'");
     }
@@ -142,8 +143,9 @@ foreach ($types as $type => $props) {
 
     $into = APP_HOME . '/' . $props->into;
 
-    @mkdir($into);
-    file_put_contents($into . '/' . $props->basename . '.' . $latest . '.' . $props->extension, $filedata);
+    $dest = $into . '/' . $props->basename . '.' . $latest . '.' . $props->extension;
+    @mkdir(dirname($dest), 0777, true);
+    file_put_contents($dest, $filedata);
 
     $latests[$type] = $latest;
 }
