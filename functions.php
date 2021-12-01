@@ -53,10 +53,6 @@ function error_response($message, $code = null, $info = [])
         $code = php_sapi_name() == 'cli' ? 1 : 400;
     }
 
-    if (php_sapi_name() != 'cli') {
-        http_response_code($code);
-    }
-
     if (!is_string($message)) {
         $message = var_export($message, true);
     }
@@ -64,16 +60,19 @@ function error_response($message, $code = null, $info = [])
     $error = $message;
     $layout = defined('LAYOUT') ? LAYOUT : 'main';
 
-    error_log("{$code} {$message}");
+    if (php_sapi_name() != 'cli') {
+        http_response_code($code);
+        error_log("{$code} {$message}");
 
-    foreach (debug_backtrace() as $trace) {
-        $location_description = implode(':', array_filter([@$trace['file'], @$trace['line']]));
+        foreach (debug_backtrace() as $trace) {
+            $location_description = implode(':', array_filter([@$trace['file'], @$trace['line']]));
 
-        if (@$trace['function']) {
-            $location_description .= ($location_description ? ' ': null) .  '(' . $trace['function'] . ')';
+            if (@$trace['function']) {
+                $location_description .= ($location_description ? ' ': null) .  '(' . $trace['function'] . ')';
+            }
+
+            error_log($location_description);
         }
-
-        error_log($location_description);
     }
 
     $fallback = 'fallback' . (php_sapi_name() == 'cli' ? '-cli' : null);
