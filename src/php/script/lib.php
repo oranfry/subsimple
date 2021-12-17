@@ -101,7 +101,7 @@ function do_layout($viewdata)
     require $layout_file;
 }
 
-function parse_property_expression($property)
+function parse_property_subexpression($property)
 {
     if (strpos($property, '->') !== 0 && strpos($property, '[') !== 0) {
         $property = '->' . $property;
@@ -126,25 +126,25 @@ function parse_property_expression($property)
     }
 
     if ($property) {
-        error_response('parse_property_expression: invalid property expression');
+        error_response(__METHOD__ . ': invalid property expression');
     }
 
     return $parts;
 }
 
-function property_expression_exists($o, $property)
+function property_subexpression_exists(object $o, string $property)
 {
-    return property_expression_value($o, $property, true);
+    return property_subexpression_value($o, $property, true);
 }
 
-function property_expression_value($o, $property, $existence_check = false)
+function property_subexpression_value(object $o, string $property, bool $existence_check = false)
 {
     $return = &$o;
 
-    foreach (parse_property_expression($property) as $part) {
+    foreach (parse_property_subexpression($property) as $part) {
         if ($part->type == 'object') {
             if (!is_object($return)) {
-                error_response('property_expression_value: not an object');
+                error_response(__METHOD__ . ': not an object');
             }
 
             if (!in_array($part->prop, array_keys(get_object_vars($return)))) {
@@ -156,7 +156,7 @@ function property_expression_value($o, $property, $existence_check = false)
                     return null;
                 }
 
-                error_response('property_expression_value: object property does not exist: ' . $part->prop);
+                error_response(__METHOD__ . ': object property does not exist: ' . $part->prop);
             }
 
             if (is_array($return->{$part->prop})) {
@@ -166,7 +166,7 @@ function property_expression_value($o, $property, $existence_check = false)
             }
         } else {
             if (!is_array($return)) {
-                error_response('property_expression_value: not an array');
+                error_response(__METHOD__ . ': not an array');
             }
 
             if (!array_key_exists($part->prop, $return)) {
@@ -178,7 +178,7 @@ function property_expression_value($o, $property, $existence_check = false)
                     return null;
                 }
 
-                error_response('property_expression_value: array key does not exist: ' . $part->prop);
+                error_response(__METHOD__ . ': array key does not exist: ' . $part->prop);
             }
 
             if (is_array($return[$part->prop])) {
@@ -194,6 +194,40 @@ function property_expression_value($o, $property, $existence_check = false)
     }
 
     return $return;
+}
+
+function property_expression_exists(object $o, string $expression)
+{
+    foreach (property_expression_subs($expression) as $property) {
+        if (!property_subexpression_value($o, $property, true)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
+function property_expression_value(object $o, string $expression, bool $existence_check = false)
+{
+    $result = null;
+
+    foreach (property_expression_subs($expression) as $property) {
+        $value = property_subexpression_value($o, $property, $existence_check);
+
+        if ($result === null) {
+            $result = $value;
+        } else {
+            $result .= $value;
+        }
+    }
+
+    return $result;
+}
+
+function property_expression_subs($expression)
+{
+    return array_map('trim', explode('.', $expression));
 }
 
 function map_objects($objectArray, $property)
@@ -218,7 +252,7 @@ function filter_objects($objectArray, $property, $cmp = 'exists', $value = null)
 {
     return array_values(array_filter($objectArray, function ($o) use ($property, $cmp, $value) {
         if (!is_object($o)) {
-            error_response('non object given to filter_objects()');
+            error_response(__METHOD__ . ': encountered non-object');
         }
 
         if (!property_expression_exists($o, $property)) {
@@ -266,7 +300,7 @@ function filter_objects($objectArray, $property, $cmp = 'exists', $value = null)
                 return true;
             }
 
-            error_response('unsupported comparison');
+            error_response(__METHOD__ . ': unsupported comparison');
         }
 
         if ($cmp == 'exists') {
@@ -315,7 +349,7 @@ function filter_objects($objectArray, $property, $cmp = 'exists', $value = null)
             return !(bool) $resolved;
         }
 
-        error_response('unsupported comparison');
+        error_response(__METHOD__ . ': unsupported comparison');
     }));
 }
 
