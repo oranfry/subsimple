@@ -420,3 +420,16 @@ function latest($type)
     return @$data->{$type} ?: 0;
 }
 
+function object_string_comparator(string $property, bool $desc = false)
+{
+    return function (object $a, object $b) use ($property, $desc) {
+        return ($desc ? -1 : 1) * ((string) property_expression_value($a, $property) <=> (string) property_expression_value($b, $property));
+    };
+}
+
+function object_int_comparator(string $property, bool $desc = false)
+{
+    return function (object $a, object $b) use ($property, $desc) {
+        return ($desc ? -1 : 1) * ((int) property_expression_value($a, $property) <=> (int) property_expression_value($b, $property));
+    };
+}
