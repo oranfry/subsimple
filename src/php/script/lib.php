@@ -303,6 +303,14 @@ function filter_objects($objectArray, $property, $cmp = 'exists', $value = null,
                 return true;
             }
 
+            if ($cmp == 'lt') {
+                return strcmp('', $value) < 0;
+            }
+
+            if ($cmp == 'gt') {
+                return strcmp('', $value) > 0;
+            }
+
             error_response(__METHOD__ . ': unsupported comparison');
         }
 
@@ -350,6 +358,14 @@ function filter_objects($objectArray, $property, $cmp = 'exists', $value = null,
 
         if ($cmp == 'falsy') {
             return !(bool) $resolved;
+        }
+
+        if ($cmp == 'lt') {
+            return strcmp($resolved, $value) < 0;
+        }
+
+        if ($cmp == 'gt') {
+            return strcmp($resolved, $value) > 0;
         }
 
         error_response(__METHOD__ . ': unsupported comparison');
