@@ -452,3 +452,10 @@ function object_int_comparator(string $property, bool $desc = false)
         return ($desc ? -1 : 1) * ((int) property_expression_value($a, $property) <=> (int) property_expression_value($b, $property));
     };
 }
+
+function object_filter(string $property, string $cmp = 'exists', $value = null, bool $value_is_expression = false)
+{
+    return function (object $o) use ($property, $cmp, $value, $value_is_expression) {
+        return property_expression_value($o, $property, $cmp, $value, $value_is_expression);
+    };
+}
