@@ -207,7 +207,6 @@ function property_expression_exists(object $o, string $expression)
     return true;
 }
 
-
 function property_expression_value(object $o, string $expression, bool $existence_check = false)
 {
     $result = null;
@@ -248,11 +247,15 @@ function map_array($arrayArray, $property)
     return array_map($callback, $arrayArray);
 }
 
-function filter_objects($objectArray, $property, $cmp = 'exists', $value = null)
+function filter_objects($objectArray, $property, $cmp = 'exists', $value = null, $value_is_expression = false)
 {
     return array_values(array_filter($objectArray, function ($o) use ($property, $cmp, $value) {
         if (!is_object($o)) {
             error_response(__METHOD__ . ': encountered non-object');
+        }
+
+        if ($value_is_expression) {
+            $value = property_expression_exists($o, $value) ? property_expression_value($o, $value) : null;
         }
 
         if (!property_expression_exists($o, $property)) {
