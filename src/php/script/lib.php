@@ -249,7 +249,7 @@ function map_array($arrayArray, $property)
 
 function filter_objects($objectArray, $property, $cmp = 'exists', $value = null, $value_is_expression = false)
 {
-    return array_values(array_filter($objectArray, function ($o) use ($property, $cmp, $value) {
+    return array_values(array_filter($objectArray, function ($o) use ($property, $cmp, $value, $value_is_expression) {
         if (!is_object($o)) {
             error_response(__METHOD__ . ': encountered non-object');
         }
