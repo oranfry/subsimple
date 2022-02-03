@@ -1,4 +1,10 @@
 {
-    "name": "oranfry/subsimple"
+    "name": "oranfry/subsimple",
+    "version": "1.0.0",
+    "autoload": {
+        "psr-4": {
+            "": "src/php/class",
+            "subsimple\\": "src/php/class/subsimple"
+        }
+    }
 }
-
