@@ -27,26 +27,6 @@ function ddj()
     die();
 }
 
-function define_autoloader()
-{
-    spl_autoload_register(function ($class_name) {
-        $class_translated = str_replace('\\', '/', $class_name);
-
-        $result = with_plugins(function($dir, $name) use ($class_translated) {
-            $file = "{$dir}/src/php/class/{$class_translated}.php";
-
-            if (file_exists($file)) {
-                require $file;
-                return true;
-            }
-        });
-
-        if (!$result) {
-            error_response("Could not autoload class {$class_name}", 500);
-        }
-    });
-}
-
 function error_response($message, $code = null, $info = [])
 {
     if ($code === null) {

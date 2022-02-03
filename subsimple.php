@@ -10,7 +10,6 @@ require __DIR__ . '/src/php/class/Config.php';
 Config::set(require APP_HOME . '/config.php');
 
 define('PLUGINS', array_unique(array_merge(@$plugins ?: [], @Config::get()->requires ?? [])));
-define_autoloader();
 load_plugin_libs();
 init_plugins();
 route();
