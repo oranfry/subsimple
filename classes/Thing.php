@@ -1,4 +1,7 @@
 <?php
+
+namespace subsimple;
+
 abstract class Thing
 {
     protected static $library = [];

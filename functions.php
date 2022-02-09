@@ -27,6 +27,11 @@ function ddj()
     die();
 }
 
+function nprint($something)
+{
+    return !print($something);
+}
+
 function error_response($message, $code = null, $info = [])
 {
     if ($code === null) {
@@ -136,6 +141,7 @@ function value($something)
 function with_plugins($callback)
 {
     // "base" plugin
+
     if ($callback(APP_HOME, null)) {
         return true;
     }

@@ -1,4 +1,7 @@
 <?php
+
+use subsimple\Config;
+
 function route()
 {
     global $argv;
@@ -9,10 +12,8 @@ function route()
 
     $path = isset($_SERVER["REQUEST_URI"]) ? strtok($_SERVER["REQUEST_URI"], '?') : implode(' ', $argv);
 
-    $routerclass = @Config::get()->router;
-
-    if (!class_exists($routerclass)) {
-        error_response('Specified router class does not exist');
+    if (!class_exists($routerclass = @Config::get()->router)) {
+        error_response('Specified router class [' . $routerclass . '] does not exist');
     }
 
     $router = new $routerclass();

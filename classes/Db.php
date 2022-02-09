@@ -1,4 +1,7 @@
 <?php
+
+namespace subsimple;
+
 final class Db
 {
     protected static $pdo;

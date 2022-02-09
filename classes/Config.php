@@ -1,4 +1,7 @@
 <?php
+
+namespace subsimple;
+
 final class Config
 {
     private static $instance = null;

@@ -1,4 +1,7 @@
 <?php
+
+namespace subsimple;
+
 class Router
 {
     protected static $routes = [];

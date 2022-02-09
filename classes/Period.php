@@ -1,4 +1,7 @@
 <?php
+
+namespace subsimple;
+
 class Period extends Thing
 {
     public $step;
