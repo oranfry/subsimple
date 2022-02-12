@@ -1,6 +1,8 @@
 <?php
+
+use subsimple\Config;
+
 require __DIR__ . '/functions.php';
-require __DIR__ . '/src/php/class/Config.php';
 
 Config::set(require APP_HOME . '/config.php');
 
