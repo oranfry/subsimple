@@ -435,7 +435,7 @@ function var_die($var)
 
 function latest($type)
 {
-    $data = json_decode(file_get_contents(APP_HOME . '/build/latest.json'));
+    $data = json_decode(file_get_contents(APP_HOME . '/latest.json'));
 
     return @$data->{$type} ?: 0;
 }

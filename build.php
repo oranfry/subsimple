@@ -13,27 +13,23 @@ init_plugins();
 
 $latests = [];
 
-foreach (['collect', 'combine'] as $file) {
-    if (!file_exists($path = APP_HOME . '/build/' . $file . '.json')) {
-        continue;
-    }
-
-    $types = json_decode(file_get_contents($path));
-
-    foreach ($types as $type => $props) {
-        if (!@$props->into) {
-            continue;
-        }
-
-        $into = APP_HOME . '/' . $props->into;
-
-        shell_exec("rm -rf \"{$into}\"");
-    }
+if (!file_exists($path = APP_HOME . '/build.json')) {
+    error_log('Buildfile does not exist, looking for: ' . $path . "\n");
+    exit(1);
 }
 
-$types = json_decode(file_get_contents(APP_HOME . '/build/collect.json'));
+$build = json_decode(file_get_contents($path));
 
-foreach ($types as $type => $props) {
+if (!@$build->into) {
+    error_log('Please specify "into" in buildfile');
+    exit(1);
+}
+
+$build_into = APP_HOME . '/' . $build->into;
+
+shell_exec("rm -rf \"{$build_into}\"");
+
+foreach (@$build->collect ?? [] as $type => $props) {
     $latest = 0;
     $schedule = [];
 
@@ -61,9 +57,7 @@ foreach ($types as $type => $props) {
         closedir($handle);
     });
 
-    $into = APP_HOME . '/' . $props->into;
-
-    @mkdir($into);
+    $into = $build_into . '/' . $props->into;
 
     foreach ($schedule as $filepath) {
         if (preg_match('/(.*)(\..*)$/', basename($filepath), $groups)) {
@@ -83,9 +77,7 @@ foreach ($types as $type => $props) {
     $latests[$type] = $latest;
 }
 
-$types = json_decode(file_get_contents(APP_HOME . '/build/combine.json'));
-
-foreach ($types as $type => $props) {
+foreach (@$build->combine ?? [] as $type => $props) {
     $filedata = "";
     $latest = 0;
     $wrapper_open = null;
@@ -142,7 +134,7 @@ foreach ($types as $type => $props) {
         $latest = max(filemtime($filepath), $latest);
     }
 
-    $into = APP_HOME . '/' . $props->into;
+    $into = $build_into . '/' . $props->into;
 
     $dest = $into . '/' . $props->basename . '.' . $latest . '.' . $props->extension;
     @mkdir(dirname($dest), 0777, true);
@@ -151,4 +143,4 @@ foreach ($types as $type => $props) {
     $latests[$type] = $latest;
 }
 
-file_put_contents(APP_HOME . '/build/latest.json', json_encode($latests));
+file_put_contents(APP_HOME . '/latest.json', json_encode($latests));
