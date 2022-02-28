@@ -16,7 +16,9 @@ class Router
 
             // validate route
 
-            if (!preg_match($http_pattern, $route, $groups) &&
+            if (
+                !preg_match($http_pattern, $route, $groups)
+                &&
                 !preg_match($cli_pattern, $route, $groups)
             ) {
                 error_response("Invalid route: {$route}");
@@ -28,7 +30,9 @@ class Router
 
             // check that method matches
 
-            if (!in_array(@$_SERVER['REQUEST_METHOD'] ?? 'CLI', $route_methods) &&
+            if (
+                !in_array(@$_SERVER['REQUEST_METHOD'] ?? 'CLI', $route_methods)
+                &&
                 (!in_array('HTTP', $route_methods) || !@$_SERVER['REQUEST_METHOD'])
             ) {
                 continue;
@@ -67,7 +71,7 @@ class Router
                 $forwardpath = $path;
 
                 if (isset($params['EAT'])) {
-                    $forwardpath = preg_replace('@' . $params['EAT'] . '@', @$params['PREPEND'] ?? '', $path) ?: '/';
+                    $forwardpath = preg_replace('/^' . preg_quote($params['EAT'], '/') . '/', @$params['PREPEND'] ?? '', $forwardpath) ?: '/';
                 }
 
                 return $params['FORWARD']::match($forwardpath);

@@ -60,14 +60,11 @@ function error_response($message, $code = null, $info = [])
         }
     }
 
-    $fallback = 'fallback' . (php_sapi_name() == 'cli' ? '-cli' : null);
-    $layout_file = search_plugins('src/php/error/' . $layout . '.php') ?? search_plugins("src/php/error/$fallback.php");
-
     while (ob_get_level()) {
         ob_end_clean();
     }
 
-    if (file_exists($layout_file)) {
+    if (file_exists($layout_file = search_plugins_for_error_layout($layout))) {
         require $layout_file;
 
         die(php_sapi_name() == 'cli' ? ($code ?? 1) : null);
@@ -112,15 +109,17 @@ function load_plugin_libs()
     });
 }
 
-function search_plugins($file)
+function search_plugins($file, &$plugin_dir = null)
 {
     $found = null;
 
-    with_plugins(function($dir, $name) use ($file, &$found) {
+    with_plugins(function($dir, $name) use ($file, &$found, &$plugin_dir) {
         $_filepath = $dir . '/' . $file;
 
         if (file_exists($_filepath)) {
             $found = $_filepath;
+            $plugin_dir = $dir;
+
             return true;
         }
     });
@@ -128,6 +127,22 @@ function search_plugins($file)
     return $found;
 }
 
+function search_plugins_for_controller($name, &$plugin_dir = null)
+{
+    return search_plugins('src/php/controller/' . $name . '.php', $plugin_dir);
+}
+
+function search_plugins_for_error_layout($name, &$plugin_dir = null)
+{
+    $fallback = 'fallback' . (php_sapi_name() == 'cli' ? '-cli' : null);
+
+    return search_plugins('src/php/error/' . $name . '.php', $plugin_dir) ?? search_plugins("src/php/error/$fallback.php", $plugin_dir);
+}
+
+function search_plugins_for_layout($name, &$plugin_dir = null)
+{
+    return search_plugins('src/php/layout/' . $name . '.php', $plugin_dir);
+}
 
 function value($something)
 {

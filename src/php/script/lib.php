@@ -23,11 +23,11 @@ function route()
     }
 
     if (!defined('PAGE')) {
-        error_response('Not set up (1)', 500);
+        error_response('Could not determine page', 500);
     }
 
-    if (!search_plugins('src/php/controller/' . PAGE . '.php')) {
-        error_response('Not set up (2): ' . PAGE, 500);
+    if (!search_plugins_for_controller(PAGE)) {
+        error_response('Missing controller for page: ' . PAGE, 500);
     }
 
     if (!defined('AUTHSCHEME')) {
@@ -51,6 +51,8 @@ function route()
 function do_controller()
 {
     return (function () {
+        $_controller_file = search_plugins_for_controller(PAGE, $_plugin_dir);
+
         $_controller_data = [];
 
         // app controller
@@ -67,7 +69,7 @@ function do_controller()
 
         // page controller
 
-        $_page_controller_data = require search_plugins('src/php/controller/' . PAGE . '.php');
+        $_page_controller_data = require $_controller_file;
 
         if (!is_array($_page_controller_data)) {
             error_response('page controller should return an array');
@@ -81,20 +83,8 @@ function do_controller()
 
 function do_layout($viewdata)
 {
-    $layout_file = null;
-
-    $result = with_plugins(function($dir, $name) use (&$layout_file) {
-        $_layout_file = $dir . '/src/php/layout/' . LAYOUT . '.php';
-
-        if (file_exists($_layout_file) && !is_dir($_layout_file)) {
-            $layout_file = $_layout_file;
-            return true;
-        }
-    });
-
-    if (!$result) {
-        error_log('Could not find a layout called "' . LAYOUT . '"');
-        error_response('Internal server error');
+    if (!$layout_file = search_plugins_for_layout(LAYOUT)) {
+        error_response('Could not find a layout called "' . LAYOUT . '"');
     }
 
     extract((array) $viewdata);
