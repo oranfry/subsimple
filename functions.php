@@ -144,6 +144,24 @@ function search_plugins_for_layout($name, &$plugin_dir = null)
     return search_plugins('src/php/layout/' . $name . '.php', $plugin_dir);
 }
 
+function ss_include($file)
+{
+    if ($resolved = search_plugins($file)) {
+        return require $resolved;
+    }
+
+    return null;
+}
+
+function ss_require($file)
+{
+    if (!($resolved = search_plugins($file))) {
+        error_response('Could not find required file within any plugin: [' . $file . ']');
+    }
+
+    return require $resolved;
+}
+
 function value($something)
 {
     if (is_callable($something)) {
