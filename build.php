@@ -116,7 +116,9 @@ foreach (@$build->combine ?? [] as $type => $props) {
 
         ob_start();
 
-        @include $wrapper_open;
+        if ($wrapper_open) {
+            require $wrapper_open;
+        }
 
         if (preg_match('/^php:.*/', $file)) {
             require $filepath;
@@ -124,7 +126,9 @@ foreach (@$build->combine ?? [] as $type => $props) {
             readfile($filepath);
         }
 
-        @include $wrapper_close;
+        if ($wrapper_close) {
+            require $wrapper_close;
+        }
 
         $dfiledata = ob_get_contents();
         $filedata .= $dfiledata;
