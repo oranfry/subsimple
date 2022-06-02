@@ -144,20 +144,24 @@ function search_plugins_for_layout($name, &$plugin_dir = null)
     return search_plugins('src/php/layout/' . $name . '.php', $plugin_dir);
 }
 
-function ss_include($file)
+function ss_include($file, array $context = [])
 {
-    if ($resolved = search_plugins($file)) {
-        return require $resolved;
+    if (!($resolved = search_plugins($file))) {
+        return null;
     }
 
-    return null;
+    extract($context, EXTR_REFS);
+
+    return require $resolved;
 }
 
-function ss_require($file)
+function ss_require($file, array $context = [])
 {
     if (!($resolved = search_plugins($file))) {
         error_response('Could not find required file within any plugin: [' . $file . ']');
     }
+
+    extract($context, EXTR_REFS);
 
     return require $resolved;
 }
