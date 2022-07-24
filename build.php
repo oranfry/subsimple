@@ -78,10 +78,10 @@ foreach (@$build->collect ?? [] as $type => $props) {
 }
 
 foreach (@$build->combine ?? [] as $type => $props) {
-    $filedata = "";
-    $latest = 0;
-    $wrapper_open = null;
+    $filedatas = [];
     $wrapper_close = null;
+    $wrapper_open = null;
+    $separator = null;
 
     if (!@$props->into) {
         echo "skipping {$type} (no into defined)\n";
@@ -98,15 +98,33 @@ foreach (@$build->combine ?? [] as $type => $props) {
         continue;
     }
 
+    if (@$props->wrapper->separator) {
+        if ($wrapper_separator = search_plugins($props->wrapper->separator)) {
+            ob_start();
+
+            require $wrapper_separator;
+
+            $separator = ob_get_contents();
+
+            ob_end_clean();
+        } else {
+            echo 'wrapper separator missing [' . $props->wrapper->separator . ']' . "\n";
+        }
+    }
+
     if (@$props->wrapper->open) {
-        $wrapper_open = search_plugins($props->wrapper->open);
+        if (!$wrapper_open = search_plugins($props->wrapper->open)) {
+            echo 'wrapper open missing' . "\n";
+        }
     }
 
     if (@$props->wrapper->close) {
-        $wrapper_close = search_plugins($props->wrapper->close);
+        if (!$wrapper_close = search_plugins($props->wrapper->close)) {
+            echo 'wrapper close missing' . "\n";
+        }
     }
 
-    foreach ($props->files as $file) {
+    foreach (array_values($props->files) as $i => $file) {
         $filepath = search_plugins(preg_replace('/.*:/', '', $file));
 
         if (!file_exists($filepath)) {
@@ -130,19 +148,22 @@ foreach (@$build->combine ?? [] as $type => $props) {
             require $wrapper_close;
         }
 
-        $dfiledata = ob_get_contents();
-        $filedata .= $dfiledata;
+        $filedatas[] = ob_get_contents();
 
         ob_end_clean();
-
-        $latest = max(filemtime($filepath), $latest);
     }
 
+    $filedata = implode($separator, $filedatas);
+    $latest = hash('SHA256', $filedata);
     $into = $build_into . '/' . $props->into;
-
     $dest = $into . '/' . $props->basename . '.' . $latest . '.' . $props->extension;
+
     @mkdir(dirname($dest), 0777, true);
     file_put_contents($dest, $filedata);
+
+    foreach ($props->then ?? [] as $command_template) {
+        shell_exec(str_replace('{}', $dest, $command_template));
+    }
 
     $latests[$type] = $latest;
 }
