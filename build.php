@@ -81,7 +81,7 @@ foreach (@$build->combine ?? [] as $type => $props) {
     $filedatas = [];
     $wrapper_close = null;
     $wrapper_open = null;
-    $separator = null;
+    $separator = '';
 
     if (!@$props->into) {
         echo "skipping {$type} (no into defined)\n";
@@ -98,18 +98,8 @@ foreach (@$build->combine ?? [] as $type => $props) {
         continue;
     }
 
-    if (@$props->wrapper->separator) {
-        if ($wrapper_separator = search_plugins($props->wrapper->separator)) {
-            ob_start();
-
-            require $wrapper_separator;
-
-            $separator = ob_get_contents();
-
-            ob_end_clean();
-        } else {
-            echo 'wrapper separator missing [' . $props->wrapper->separator . ']' . "\n";
-        }
+    if ($separator_file = @$props->wrapper->separator) {
+        $separator = ss_capture($separator_file);
     }
 
     if (@$props->wrapper->open) {
