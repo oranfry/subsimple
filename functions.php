@@ -144,6 +144,15 @@ function search_plugins_for_layout($name, &$plugin_dir = null)
     return search_plugins('src/php/layout/' . $name . '.php', $plugin_dir);
 }
 
+function ss_capture($file, array $context = [], &$return_value = null)
+{
+    ob_start();
+
+    $return_value = ss_require($file, $context);
+
+    return ob_get_clean();
+}
+
 function ss_include($file, array $context = [])
 {
     if (!($resolved = search_plugins($file))) {
