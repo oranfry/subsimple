@@ -6,7 +6,7 @@ class Router
 {
     protected static $routes = [];
 
-    public static function match($path)
+    public static function match(string $path, array $page_params = []): bool
     {
         foreach (static::$routes as $route => $params) {
             $method_pattern = implode('|', ['GET', 'POST', 'DELETE', 'PUT', 'HTTP']);
@@ -67,18 +67,6 @@ class Router
 
             array_shift($groups);
 
-            if (isset($params['FORWARD'])) {
-                $forwardpath = $path;
-
-                if (isset($params['EAT'])) {
-                    $forwardpath = preg_replace('/^' . preg_quote($params['EAT'], '/') . '/', @$params['PREPEND'] ?? '', $forwardpath) ?: '/';
-                }
-
-                return $params['FORWARD']::match($forwardpath);
-            }
-
-            $page_params = [];
-
             foreach ($groups as $i => $group) {
                 if (!array_key_exists($i, $params)) {
                     error_response('Routing error: please provide URL argument name', 500);
@@ -93,6 +81,16 @@ class Router
                 if (!is_int($key)) {
                     $page_params[$key] = $value;
                 }
+            }
+
+            if (isset($params['FORWARD'])) {
+                $forwardpath = $path;
+
+                if (isset($params['EAT'])) {
+                    $forwardpath = preg_replace('/^' . preg_quote($params['EAT'], '/') . '/', @$params['PREPEND'] ?? '', $forwardpath) ?: '/';
+                }
+
+                return $params['FORWARD']::match($forwardpath, $page_params);
             }
 
             define('PAGE_PARAMS', $page_params);
