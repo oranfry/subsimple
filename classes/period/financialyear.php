@@ -1,7 +1,8 @@
 <?php
-namespace period;
 
-class financialyear extends \Period
+namespace subsimple\period;
+
+class financialyear extends \subsimple\Period
 {
     public function __construct()
     {

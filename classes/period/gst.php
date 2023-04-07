@@ -1,14 +1,12 @@
 <?php
-namespace period;
 
-class gst extends \Period
+namespace subsimple\period;
+
+class gst extends \subsimple\Period
 {
-    public function __construct()
-    {
-        $this->id = 'gst';
-        $this->navlabel = 'GST Period';
-        $this->step = '2 month';
-    }
+    public $id = 'gst';
+    public $navlabel = 'GST Period';
+    public $step = '2 month';
 
     public function label($from)
     {

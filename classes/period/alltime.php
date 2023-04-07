@@ -1,7 +1,8 @@
 <?php
-namespace period;
 
-class alltime extends \Period
+namespace subsimple\period;
+
+class alltime extends \subsimple\Period
 {
     public $id = 'a';
     public $navlabel = 'All Time';

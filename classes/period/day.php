@@ -1,7 +1,8 @@
 <?php
-namespace period;
 
-class day extends \Period
+namespace subsimple\period;
+
+class day extends \subsimple\Period
 {
     public $id = 'd';
     public $navlabel = 'Day';

@@ -1,7 +1,8 @@
 <?php
-namespace period;
 
-class month extends \Period
+namespace subsimple\period;
+
+class month extends \subsimple\Period
 {
     public $id = 'm';
     public $navlabel = 'Month';
