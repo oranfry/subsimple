@@ -144,33 +144,33 @@ function search_plugins_for_layout($name, &$plugin_dir = null)
     return search_plugins('src/php/layout/' . $name . '.php', $plugin_dir);
 }
 
-function ss_capture($file, array $context = [], &$return_value = null)
+function ss_capture($file, array $viewdata = [], &$return_value = null)
 {
     ob_start();
 
-    $return_value = ss_require($file, $context);
+    $return_value = ss_require($file, $viewdata);
 
     return ob_get_clean();
 }
 
-function ss_include($file, array $context = [])
+function ss_include($file, array $viewdata = [])
 {
     if (!($resolved = search_plugins($file))) {
         return null;
     }
 
-    extract($context, EXTR_REFS);
+    extract($viewdata, EXTR_REFS);
 
     return require $resolved;
 }
 
-function ss_require($file, array $context = [])
+function ss_require($file, array $viewdata = [])
 {
     if (!($resolved = search_plugins($file))) {
         error_response('Could not find required file within any plugin: [' . $file . ']');
     }
 
-    extract($context, EXTR_REFS);
+    extract($viewdata, EXTR_REFS);
 
     return require $resolved;
 }
