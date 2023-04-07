@@ -4,10 +4,10 @@ namespace subsimple;
 
 abstract class Thing
 {
-    protected static $library = [];
-    public $name;
+    protected static array $library = [];
+    public string $name;
 
-    public static function create($name)
+    public static function create(string $name): static
     {
         $class = strtolower(get_called_class()) . '\\' . $name;
         $thing = new $class();
@@ -16,12 +16,8 @@ abstract class Thing
         return $thing;
     }
 
-    public static function load($name)
+    public static function load(string $name): static
     {
-        if (!is_string($name)) {
-            error_response('Name passed to Thing::load was not a string', 500);
-        }
-
         $class = strtolower(get_called_class()) . '\\' . $name;
 
         if (isset(static::$library[$class])) {
@@ -35,16 +31,8 @@ abstract class Thing
         return $thing;
     }
 
-    public static function rput($alias, $thing)
+    public static function rput(string $alias, $thing): void
     {
-        if (!property_exists(get_called_class(), 'register') || !is_array(static::$register)) {
-            error_response(get_called_class() . ' does not have a register', 500);
-        }
-
-        if (!is_string($alias)) {
-            error_response('Alias passed to ' . get_called_class() . '::rput was not a string', 500);
-        }
-
         if (!$thing instanceof static) {
             error_response('Object passed to ' . get_called_class() . '::rput is not a ' . get_called_class() . ' (is ' . get_class($thing) . ')', 500);
         }
@@ -52,16 +40,12 @@ abstract class Thing
         static::$register[$alias] = $thing;
     }
 
-    public static function rget($alias)
+    public static function rget(string $alias): static
     {
-        if (!is_string($alias)) {
-            error_response('Alias passed to ' . get_called_class() . '::rget was not a string', 500);
-        }
-
         return @static::$register[$alias];
     }
 
-    public static function rgetAll()
+    public static function rgetAll(): array
     {
         return static::$register;
     }
