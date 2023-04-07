@@ -115,10 +115,9 @@ foreach (@$build->combine ?? [] as $type => $props) {
     }
 
     foreach (array_values($props->files) as $i => $file) {
-        $filepath = search_plugins(preg_replace('/.*:/', '', $file));
-
-        if (!file_exists($filepath)) {
+        if (!$filepath = search_plugins(preg_replace('/.*:/', '', $file))) {
             echo "skipping {$type} (file {$file} does not exist)\n";
+
             continue 2;
         }
 
