@@ -4,13 +4,10 @@ namespace subsimple\period;
 
 class financialyear extends \subsimple\Period
 {
-    public function __construct()
-    {
-        $this->id = 'fy';
-        $this->navlabel = 'Financial Year';
-        $this->step = '1 year';
-        $this->graphdiv = '1 month';
-    }
+    public $graphdiv = '1 month';
+    public $id = 'fy';
+    public $navlabel = 'Financial Year';
+    public $step = '1 year';
 
     function label($from)
     {
