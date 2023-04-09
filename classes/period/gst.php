@@ -16,11 +16,24 @@ class gst extends \subsimple\Period
         $m1 = date('M', strtotime($from));
         $m2 = date('M', strtotime(date_shift($from, '+1 month')));
 
+        $num = match ((int) date('n', strtotime($from))) {
+            2 => 6,
+            4 => 1,
+            6 => 2,
+            8 => 3,
+            10 => 4,
+            12 => 5,
+            default => error_response($from),
+        };
+
+        $fy = $y1 + ($num == 6 ? 0 : 1);
+        $id = "$fy#$num";
+
         if ($y1 == $y2) {
-            return "$m1 ~ $m2 $y1";
+            return  "$id ($m1 ~ $m2 $y1)";
         }
 
-        return "$m1 $y1 ~ $m2 $y2";
+        return "$id ($m1 $y1 ~ $m2 $y2)";
     }
 
     function rawstart($date)
