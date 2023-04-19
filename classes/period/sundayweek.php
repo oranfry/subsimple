@@ -26,6 +26,15 @@ class sundayweek extends \subsimple\Period
 
     public function start($rawstart)
     {
-        return ff($rawstart, 'Sun');
+        return static::ff($rawstart, 'Sun');
+    }
+
+    protected static function ff($date, $day = 'Mon')
+    {
+        while (date('D', strtotime($date)) != $day) {
+            $date = static::date_shift($date, '1 day');
+        }
+
+        return $date;
     }
 }

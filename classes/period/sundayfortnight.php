@@ -1,8 +1,8 @@
 <?php
 
-namespace period;
+namespace subsimple\period;
 
-class sundayfortnight extends \Period
+class sundayfortnight extends \subsimple\Period
 {
     public $id = 'sf';
     public $navlabel = 'Sunday Fortnight';
@@ -26,7 +26,7 @@ class sundayfortnight extends \Period
 
     public function start($rawstart)
     {
-        $time = strtotime(ff($rawstart, 'Sun'));
+        $time = strtotime(static::ff($rawstart, 'Sun'));
         $fortnight_in_s = 1209600;
         $week_in_s = 604800;
         $x = $time / $fortnight_in_s;
@@ -36,5 +36,14 @@ class sundayfortnight extends \Period
         }
 
         return date('Y-m-d', $time);
+    }
+
+    protected static function ff($date, $day = 'Mon')
+    {
+        while (date('D', strtotime($date)) != $day) {
+            $date = date_shift($date, '1 day');
+        }
+
+        return $date;
     }
 }
