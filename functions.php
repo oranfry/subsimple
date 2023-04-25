@@ -157,7 +157,9 @@ function ss_capture($file, array $viewdata = [], &$return_value = null)
 
 function ss_include($file, array $viewdata = [])
 {
-    if (!($resolved = search_plugins($file))) {
+    if (strpos($file, '/') === 0) {
+        $resolved = $file;
+    } elseif (!($resolved = search_plugins($file))) {
         return null;
     }
 
@@ -168,7 +170,9 @@ function ss_include($file, array $viewdata = [])
 
 function ss_require($file, array $viewdata = [])
 {
-    if (!($resolved = search_plugins($file))) {
+    if (strpos($file, '/') === 0) {
+        $resolved = $file;
+    } elseif (!($resolved = search_plugins($file))) {
         error_response('Could not find required file within any plugin: [' . $file . ']');
     }
 
@@ -254,33 +258,48 @@ function route()
 function do_controller()
 {
     return (function () {
-        $_controller_file = search_plugins_for_controller(PAGE, $_plugin_dir);
+        $page_controller = search_plugins_for_controller(PAGE, $_plugin_dir);
+        $controller_data = compact('_plugin_dir');
 
-        $_controller_data = [];
+        // plugin controllers
+
+        with_plugins(function ($plugin_dir) use (&$controller_data) {
+            if (!is_file($plugin_controller = $plugin_dir . '/src/php/controller/plugin.php')) {
+                return;
+            }
+
+            $plugin_controller_data = ss_require($plugin_controller, $controller_data);
+
+            if (!is_array($plugin_controller_data)) {
+                error_response('plugin controller should return an array');
+            }
+
+            $controller_data = array_merge($controller_data, $plugin_controller_data);
+        });
 
         // app controller
 
         if (is_file($_app_controller = APP_HOME . '/src/php/controller/app.php')) {
-            $_app_controller_data = require $_app_controller;
+            $app_controller_data = ss_require($_app_controller, $controller_data);
 
-            if (!is_array($_app_controller_data)) {
+            if (!is_array($app_controller_data)) {
                 error_response('app controller should return an array');
             }
 
-            $_controller_data = $_app_controller_data;
+            $controller_data = array_merge($controller_data, $app_controller_data);
         }
 
         // page controller
 
-        $_page_controller_data = require $_controller_file;
+        $page_controller_data = ss_require($page_controller, $controller_data);
 
-        if (!is_array($_page_controller_data)) {
+        if (!is_array($page_controller_data)) {
             error_response('page controller should return an array');
         }
 
-        $_controller_data = array_merge($_controller_data, $_page_controller_data);
+        $controller_data = array_merge($controller_data, $page_controller_data);
 
-        return $_controller_data;
+        return $controller_data;
     })();
 }
 
