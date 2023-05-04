@@ -34,11 +34,9 @@ function nprint($something)
     return !print($something);
 }
 
-function error_response($message, $code = null, $info = [])
+function error_response($message, int $code = null)
 {
-    if ($code === null) {
-        $code = php_sapi_name() == 'cli' ? 1 : 400;
-    }
+    $code ??= (php_sapi_name() == 'cli' ? 1 : 400);
 
     if (!is_string($message)) {
         $message = var_export($message, true);
@@ -68,13 +66,15 @@ function error_response($message, $code = null, $info = [])
 
     if (file_exists($layout_file = search_plugins_for_error_layout($layout))) {
         require $layout_file;
-
-        die(php_sapi_name() == 'cli' ? ($code ?? 1) : null);
+    } else {
+        echo "An error occurred but we are unable to display any details\n";
     }
 
-    echo "An error occurred but we are unable to display any details\n";
+    if (php_sapi_name() == 'cli') {
+        die($code ?? 1);
+    }
 
-    die(php_sapi_name() == 'cli' ? ($code ?? 1) : null);
+    die();
 }
 
 function identity($argument)
