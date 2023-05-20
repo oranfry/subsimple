@@ -114,11 +114,29 @@ foreach (@$build->combine ?? [] as $type => $props) {
         }
     }
 
-    foreach (array_values($props->files) as $i => $file) {
+    $files = array_values($props->files);
+
+    for ($i = 0; $i < count($files); $i++) {
+        $file = $files[$i];
+
         if (!$filepath = search_plugins(preg_replace('/.*:/', '', $file))) {
             echo "skipping {$type} (file {$file} does not exist)\n";
 
             continue 2;
+        }
+
+        if (preg_match('/^include:.*/', $file)) {
+            $morefiles = json_decode(file_get_contents($filepath), true);
+
+            if (!is_array($morefiles)) {
+                echo "skipping {$type} (file {$file} should be JSON array)\n";
+
+                continue 2;
+            }
+
+            array_splice($files, $i--, 1, array_values($morefiles));
+
+            continue;
         }
 
         ob_start();
