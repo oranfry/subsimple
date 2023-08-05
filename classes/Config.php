@@ -9,16 +9,10 @@ final class Config
     public static function set($config)
     {
         if (static::$instance !== null) {
-            die('Only one config allowed');
+            throw new Exception('Only one config allowed');
         }
 
         static::$instance = $config;
-    }
-
-    public static function replace($config)
-    {
-        static::$instance = null;
-        static::set($config);
     }
 
     public static function get()

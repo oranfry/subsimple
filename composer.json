@@ -1,9 +1,11 @@
 {
-    "name": "oranfry/subsimple",
-    "version": "1.0.0",
     "autoload": {
         "psr-4": {
             "subsimple\\": "classes"
         }
+    },
+    "name": "oranfry/subsimple",
+    "require": {
+        "php": ">=8.1"
     }
 }

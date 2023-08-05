@@ -4,11 +4,9 @@ namespace subsimple;
 
 class Router
 {
-    protected static $routes = [];
-
-    public static function match(string $path, array $page_params = []): bool
+    public final static function match(string $path, array $page_params = []): bool
     {
-        foreach (static::$routes as $route => $params) {
+        foreach (static::$routes ?? [] as $route => $params) {
             $method_pattern = implode('|', ['GET', 'POST', 'DELETE', 'PUT', 'HTTP']);
             $methods_pattern = '(?:' . $method_pattern . ')(?:\|(?:' . $method_pattern . '))*';
             $http_pattern = '/^(' . $methods_pattern . ')\s+(\S+)$/';
@@ -18,10 +16,9 @@ class Router
 
             if (
                 !preg_match($http_pattern, $route, $groups)
-                &&
-                !preg_match($cli_pattern, $route, $groups)
+                && !preg_match($cli_pattern, $route, $groups)
             ) {
-                error_response("Invalid route: {$route}");
+                throw new Exception("Invalid route: {$route}");
             }
 
             list(, $method_list, $pattern) = $groups;
@@ -32,8 +29,7 @@ class Router
 
             if (
                 !in_array(@$_SERVER['REQUEST_METHOD'] ?? 'CLI', $route_methods)
-                &&
-                (!in_array('HTTP', $route_methods) || !@$_SERVER['REQUEST_METHOD'])
+                && (!in_array('HTTP', $route_methods) || !@$_SERVER['REQUEST_METHOD'])
             ) {
                 continue;
             }
@@ -69,7 +65,7 @@ class Router
 
             foreach ($groups as $i => $group) {
                 if (!array_key_exists($i, $params)) {
-                    error_response('Routing error: please provide URL argument name', 500);
+                    Exception('Routing error: please provide URL argument name', 500);
                 }
 
                 if ($params[$i]) {

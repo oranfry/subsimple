@@ -1,6 +1,12 @@
 <?php
 
 use subsimple\Config;
+use subsimple\Exception;
+
+function date_shift($date, $offset)
+{
+    return date('Y-m-d', strtotime($offset, strtotime($date)));
+}
 
 function dd()
 {
@@ -29,9 +35,74 @@ function ddj()
     die();
 }
 
-function nprint($something)
+function deinit_plugins()
 {
-    return !print($something);
+    with_plugins(function($dir, $name) {
+        $init_func = 'deinit_' . ($name ?? 'app');
+
+        if (function_exists($init_func)) {
+            $init_func();
+        }
+    });
+}
+
+function do_controller()
+{
+    return (function () {
+        $page_controller = search_plugins_for_controller(PAGE, $_plugin_dir);
+        $controller_data = compact('_plugin_dir');
+
+        // plugin controllers
+
+        with_plugins(function ($plugin_dir) use (&$controller_data) {
+            if (!is_file($plugin_controller = $plugin_dir . '/src/php/controller/plugin.php')) {
+                return;
+            }
+
+            $plugin_controller_data = ss_require($plugin_controller, $controller_data);
+
+            if (!is_array($plugin_controller_data)) {
+                Exception('plugin controller should return an array');
+            }
+
+            $controller_data = array_merge($controller_data, $plugin_controller_data);
+        });
+
+        // app controller
+
+        if (is_file($_app_controller = APP_HOME . '/src/php/controller/app.php')) {
+            $app_controller_data = ss_require($_app_controller, $controller_data);
+
+            if (!is_array($app_controller_data)) {
+                throw new Exception('app controller should return an array');
+            }
+
+            $controller_data = array_merge($controller_data, $app_controller_data);
+        }
+
+        // page controller
+
+        $page_controller_data = ss_require($page_controller, $controller_data);
+
+        if (!is_array($page_controller_data)) {
+            throw new Exception('page controller should return an array');
+        }
+
+        $controller_data = array_merge($controller_data, $page_controller_data);
+
+        return $controller_data;
+    })();
+}
+
+function do_layout($viewdata)
+{
+    if (!$layout_file = search_plugins_for_layout(LAYOUT)) {
+        throw new Exception('Could not find a layout called "' . LAYOUT . '"');
+    }
+
+    extract((array) $viewdata);
+
+    require $layout_file;
 }
 
 function error_response($message, int $code = null)
@@ -93,21 +164,68 @@ function init_plugins()
     });
 }
 
-function deinit_plugins()
+function latest($type)
 {
-    with_plugins(function($dir, $name) {
-        $init_func = 'deinit_' . ($name ?? 'app');
+    $data = json_decode(file_get_contents(APP_HOME . '/latest.json'), true);
 
-        if (function_exists($init_func)) {
-            $init_func();
-        }
-    });
+    return $data[$type] ?? 0;
 }
 
 function load_plugin_libs()
 {
     with_plugins(function($dir, $name) {
         @include $dir . '/src/php/script/lib.php';
+    });
+}
+
+function nprint($something)
+{
+    return !print($something);
+}
+
+function route()
+{
+    global $argv;
+
+    if (isset($argv)) {
+        $command = array_shift($argv);
+    }
+
+    $path = isset($_SERVER["REQUEST_URI"]) ? strtok($_SERVER["REQUEST_URI"], '?') : implode(' ', $argv);
+
+    if (!class_exists($routerclass = @Config::get()->router)) {
+        throw new Exception('Specified router class [' . $routerclass . '] does not exist');
+    }
+
+    $router = new $routerclass();
+
+    if (!$router->match($path)) {
+        throw new Exception("Not found: {$path}", 404);
+    }
+
+    if (!defined('PAGE')) {
+        throw new Exception('Could not determine page', 500);
+    }
+
+    if (!search_plugins_for_controller(PAGE)) {
+        throw new Exception('Missing controller for page: ' . PAGE, 500);
+    }
+
+    if (!defined('AUTHSCHEME')) {
+        define('AUTHSCHEME', 'cookie');
+    }
+
+    if (!in_array(AUTHSCHEME, ['cookie', 'header', 'onetime', 'none', 'deny'])) {
+        error_log('AUTHSCHEME should be set to "cookie", "header", "onetime", "none", or "deny"');
+        die();
+    }
+
+    with_plugins(function($dir, $name) {
+        $init_func = 'postroute_' . ($name ?? 'app');
+
+        if (function_exists($init_func)) {
+            $init_func();
+        }
     });
 }
 
@@ -173,7 +291,7 @@ function ss_require($file, array $viewdata = [])
     if (strpos($file, '/') === 0) {
         $resolved = $file;
     } elseif (!($resolved = search_plugins($file))) {
-        error_response('Could not find required file within any plugin: [' . $file . ']');
+        throw new Exception('Could not find required file within any plugin: [' . $file . ']');
     }
 
     extract($viewdata, EXTR_REFS);
@@ -188,6 +306,19 @@ function value($something)
     }
 
     return $something;
+}
+
+function var_die($var)
+{
+    // obfuscate the call to some degree
+    $function = implode('_', ['var', 'dump']);
+
+    if (PHP_SAPI != 'cli') {
+        echo '<pre>';
+    }
+
+    $function($var);
+    die('-');
 }
 
 function with_plugins($callback)
@@ -208,133 +339,3 @@ function with_plugins($callback)
 
     return false;
 }
-
-function route()
-{
-    global $argv;
-
-    if (isset($argv)) {
-        $command = array_shift($argv);
-    }
-
-    $path = isset($_SERVER["REQUEST_URI"]) ? strtok($_SERVER["REQUEST_URI"], '?') : implode(' ', $argv);
-
-    if (!class_exists($routerclass = @Config::get()->router)) {
-        error_response('Specified router class [' . $routerclass . '] does not exist');
-    }
-
-    $router = new $routerclass();
-
-    if (!$router->match($path)) {
-        error_response("Not found: {$path}", 404);
-    }
-
-    if (!defined('PAGE')) {
-        error_response('Could not determine page', 500);
-    }
-
-    if (!search_plugins_for_controller(PAGE)) {
-        error_response('Missing controller for page: ' . PAGE, 500);
-    }
-
-    if (!defined('AUTHSCHEME')) {
-        define('AUTHSCHEME', 'cookie');
-    }
-
-    if (!in_array(AUTHSCHEME, ['cookie', 'header', 'onetime', 'none', 'deny'])) {
-        error_log('AUTHSCHEME should be set to "cookie", "header", "onetime", "none", or "deny"');
-        die();
-    }
-
-    with_plugins(function($dir, $name) {
-        $init_func = 'postroute_' . ($name ?? 'app');
-
-        if (function_exists($init_func)) {
-            $init_func();
-        }
-    });
-}
-
-function do_controller()
-{
-    return (function () {
-        $page_controller = search_plugins_for_controller(PAGE, $_plugin_dir);
-        $controller_data = compact('_plugin_dir');
-
-        // plugin controllers
-
-        with_plugins(function ($plugin_dir) use (&$controller_data) {
-            if (!is_file($plugin_controller = $plugin_dir . '/src/php/controller/plugin.php')) {
-                return;
-            }
-
-            $plugin_controller_data = ss_require($plugin_controller, $controller_data);
-
-            if (!is_array($plugin_controller_data)) {
-                error_response('plugin controller should return an array');
-            }
-
-            $controller_data = array_merge($controller_data, $plugin_controller_data);
-        });
-
-        // app controller
-
-        if (is_file($_app_controller = APP_HOME . '/src/php/controller/app.php')) {
-            $app_controller_data = ss_require($_app_controller, $controller_data);
-
-            if (!is_array($app_controller_data)) {
-                error_response('app controller should return an array');
-            }
-
-            $controller_data = array_merge($controller_data, $app_controller_data);
-        }
-
-        // page controller
-
-        $page_controller_data = ss_require($page_controller, $controller_data);
-
-        if (!is_array($page_controller_data)) {
-            error_response('page controller should return an array');
-        }
-
-        $controller_data = array_merge($controller_data, $page_controller_data);
-
-        return $controller_data;
-    })();
-}
-
-function do_layout($viewdata)
-{
-    if (!$layout_file = search_plugins_for_layout(LAYOUT)) {
-        error_response('Could not find a layout called "' . LAYOUT . '"');
-    }
-
-    extract((array) $viewdata);
-
-    require $layout_file;
-}
-
-function date_shift($date, $offset)
-{
-    return date('Y-m-d', strtotime($offset, strtotime($date)));
-}
-
-function var_die($var)
-{
-    $function = implode('_', ['var', 'dump']);
-
-    if (PHP_SAPI != 'cli') {
-        echo '<pre>';
-    }
-
-    $function($var);
-    die('-');
-}
-
-function latest($type)
-{
-    $data = json_decode(file_get_contents(APP_HOME . '/latest.json'));
-
-    return @$data->{$type} ?: 0;
-}
-
