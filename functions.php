@@ -62,7 +62,7 @@ function do_controller()
             $plugin_controller_data = ss_require($plugin_controller, $controller_data);
 
             if (!is_array($plugin_controller_data)) {
-                Exception('plugin controller should return an array');
+                throw new Exception('plugin controller should return an array');
             }
 
             $controller_data = array_merge($controller_data, $plugin_controller_data);
