@@ -264,29 +264,29 @@ function search_plugins_for_layout($name, &$plugin_dir = null)
     return search_plugins('src/php/layout/' . $name . '.php', $plugin_dir);
 }
 
-function ss_capture($file, array $viewdata = [], &$return_value = null)
+function ss_capture($file, array $viewdata = [], ?object $bindTo = null, &$return_value = null)
 {
     ob_start();
 
-    $return_value = ss_require($file, $viewdata);
+    $return_value = ss_require($file, $viewdata, $bindTo);
 
     return ob_get_clean();
 }
 
-function ss_include($file, array $viewdata = [])
+function ss_include($file, array $viewdata = [], ?object $bindTo = null)
 {
-    if (strpos($file, '/') === 0) {
-        $resolved = $file;
-    } elseif (!($resolved = search_plugins($file))) {
+    if (
+        strpos($file, '/') === 0
+        && !is_file($resolved = $file)
+        || !$resolved = search_plugins($file)
+    ) {
         return null;
     }
 
-    extract($viewdata, EXTR_REFS);
-
-    return require $resolved;
+    return ss_require($resolved, $viewdata, $bindTo);
 }
 
-function ss_require($file, array $viewdata = [])
+function ss_require($file, array $viewdata = [], ?object $bindTo = null)
 {
     if (strpos($file, '/') === 0) {
         $resolved = $file;
@@ -294,9 +294,17 @@ function ss_require($file, array $viewdata = [])
         throw new Exception('Could not find required file within any plugin: [' . $file . ']');
     }
 
-    extract($viewdata, EXTR_REFS);
+    $closure = function () use ($resolved, $viewdata) {
+        extract($viewdata, EXTR_REFS);
 
-    return require $resolved;
+        return require $resolved;
+    };
+
+    if ($bindTo) {
+        $closure = Closure::bind($closure, $bindTo, get_class($bindTo));
+    }
+
+    return $closure();
 }
 
 function value($something)
