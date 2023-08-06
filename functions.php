@@ -3,6 +3,11 @@
 use subsimple\Config;
 use subsimple\Exception;
 
+function array_key_by_value(array $array): array
+{
+    return array_combine($array, $array);
+}
+
 function date_shift($date, $offset)
 {
     return date('Y-m-d', strtotime($offset, strtotime($date)));
