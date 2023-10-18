@@ -8,6 +8,11 @@ function array_key_by_value(array $array): array
     return array_combine($array, $array);
 }
 
+function array_map_values(callable $callback, array $array): array
+{
+    return array_map($callback, array_key_by_value($array));
+}
+
 function date_shift($date, $offset)
 {
     return date('Y-m-d', strtotime($offset, strtotime($date)));
