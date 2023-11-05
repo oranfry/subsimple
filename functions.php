@@ -2,6 +2,7 @@
 
 use subsimple\Config;
 use subsimple\Exception;
+use subsimple\NotFoundException;
 
 function array_key_by_value(array $array): array
 {
@@ -115,49 +116,6 @@ function do_layout($viewdata)
     require $layout_file;
 }
 
-function error_response($message, int $code = null)
-{
-    $code ??= (php_sapi_name() == 'cli' ? 1 : 400);
-
-    if (!is_string($message)) {
-        $message = var_export($message, true);
-    }
-
-    $error = $message;
-    $layout = defined('LAYOUT') ? LAYOUT : 'main';
-
-    if (php_sapi_name() != 'cli') {
-        http_response_code($code);
-        error_log("{$code} {$message}");
-
-        foreach (debug_backtrace() as $trace) {
-            $location_description = implode(':', array_filter([@$trace['file'], @$trace['line']]));
-
-            if (@$trace['function']) {
-                $location_description .= ($location_description ? ' ': null) .  '(' . $trace['function'] . ')';
-            }
-
-            error_log($location_description);
-        }
-    }
-
-    while (ob_get_level()) {
-        ob_end_clean();
-    }
-
-    if (file_exists($layout_file = search_plugins_for_error_layout($layout))) {
-        require $layout_file;
-    } else {
-        echo "An error occurred but we are unable to display any details\n";
-    }
-
-    if (php_sapi_name() == 'cli') {
-        die($code ?? 1);
-    }
-
-    die();
-}
-
 function identity($argument)
 {
     return $argument;
@@ -210,7 +168,7 @@ function route()
     $router = new $routerclass();
 
     if (!$router->match($path)) {
-        throw new Exception("Not found: {$path}", 404);
+        throw new NotFoundException("Not found: {$path}", 404);
     }
 
     if (!defined('PAGE')) {
