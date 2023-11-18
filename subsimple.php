@@ -28,13 +28,24 @@ try {
 
     deinit_plugins();
 } catch (Exception $exception) {
+    $layout_paths = array_filter([
+        defined('LAYOUT') ? LAYOUT : null,
+        'default',
+    ]);
+
     for (
         $class = get_class($exception), $handled = false;
         !$handled && $class !== false;
         $class = get_parent_class($class)
     ) {
-        if ($handler_file = search_plugins('src/php/error/' . str_replace('\\', '/', $class) . '.php')) {
-            $handled = require $handler_file ?? true;
+        foreach ($layout_paths as $error_layout) {
+            $include = 'src/php/error/' . $error_layout . '/' . str_replace('\\', '/', $class) . '.php';
+
+            if ($handler_file = search_plugins($include)) {
+                $handled = require $handler_file ?? true;
+
+                break;
+            }
         }
     }
 }

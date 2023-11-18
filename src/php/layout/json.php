@@ -15,5 +15,5 @@ foreach ($headers ?? [] as $header => $value) {
 }
 
 if (@$data !== null) {
-    echo json_encode($data);
+    echo json_encode($data, JSON_UNESCAPED_SLASHES);
 }

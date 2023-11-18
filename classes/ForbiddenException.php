@@ -2,6 +2,6 @@
 
 namespace subsimple;
 
-class NotFoundException extends RoutingException
+class ForbiddenException extends RoutingException
 {
 }
