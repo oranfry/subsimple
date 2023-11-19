@@ -64,7 +64,7 @@ foreach (@$build->collect ?? [] as $type => $props) {
             $filename = $groups[1];
             $ext = $groups[2];
         } else {
-            $filename = baename($filepath);
+            $filename = $filepath;
             $ext = '';
         }
 
