@@ -179,15 +179,6 @@ function route()
         throw new Exception('Missing controller for page: ' . PAGE, 500);
     }
 
-    if (!defined('AUTHSCHEME')) {
-        define('AUTHSCHEME', 'cookie');
-    }
-
-    if (!in_array(AUTHSCHEME, ['cookie', 'header', 'onetime', 'none', 'deny'])) {
-        error_log('AUTHSCHEME should be set to "cookie", "header", "onetime", "none", or "deny"');
-        die();
-    }
-
     with_plugins(function($dir, $name) {
         $init_func = 'postroute_' . ($name ?? 'app');
 
