@@ -61,7 +61,7 @@ class Router
 
             // we have found a match
 
-            array_shift($groups);
+            define('SUBSIMPLE_METHOD', array_shift($groups));
 
             foreach ($groups as $i => $group) {
                 if (!array_key_exists($i, $params)) {
