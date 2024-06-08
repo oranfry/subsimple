@@ -61,7 +61,7 @@ class Router
 
             // we have found a match
 
-            define('SUBSIMPLE_METHOD', array_shift($groups));
+            $subsimple_method = array_shift($groups);
 
             foreach ($groups as $i => $group) {
                 if (!array_key_exists($i, $params)) {
@@ -89,6 +89,7 @@ class Router
                 return $params['FORWARD']::match($forwardpath, $page_params);
             }
 
+            define('SUBSIMPLE_METHOD', $subsimple_method);
             define('PAGE_PARAMS', $page_params);
 
             foreach ($page_params as $key => $value) {
