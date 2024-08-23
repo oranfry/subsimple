@@ -19,31 +19,44 @@ function date_shift($date, $offset)
     return date('Y-m-d', strtotime($offset, strtotime($date)));
 }
 
-function dd()
+function dumpj(...$arguments): void
 {
-    call_user_func_array('var_dump', func_get_args());
+    _dump('json_encode', ...$arguments);
+}
+
+function dump(...$arguments): void
+{
+    _dump('var_dump', ...$arguments);
+}
+
+function ddj(...$arguments): void
+{
+    dumpj(...$arguments);
 
     die();
 }
 
-function ddj()
+function dd(...$arguments): void
 {
-    if (php_sapi_name() == 'cli') {
-        $wrap = 'identity';
-    } else {
-        $wrap = 'htmlspecialchars';
-        echo '<pre>';
-    }
-
-    foreach (func_get_args() as $i => $data) {
-        if ($i) {
-            echo "\n----------\n";
-        }
-
-        echo $wrap(json_encode($data, JSON_PRETTY_PRINT));
-    }
+    dump(...$arguments);
 
     die();
+}
+
+function _dump($encoder, ...$arguments): void
+{
+    $layout_paths = array_map(fn ($layout) => 'src/php/dump/' . $layout . '/' . $encoder . '.php', array_filter([
+        defined('LAYOUT') ? LAYOUT : null,
+        'default',
+    ]));
+
+    foreach ($layout_paths as $include) {
+        foreach (search_plugins_all($include) as $handler) {
+            if (require $handler ?? true) {
+                return;
+            }
+        }
+    }
 }
 
 function deinit_plugins()
