@@ -2,6 +2,6 @@
 
 namespace subsimple;
 
-class RoutingException extends Exception
+class RoutingException extends HttpException
 {
 }

@@ -188,7 +188,7 @@ function route()
     });
 }
 
-function search_plugins($file, &$plugin_dir = null)
+function search_plugins(string $file, ?string &$plugin_dir = null): ?string
 {
     $found = null;
 
@@ -200,6 +200,22 @@ function search_plugins($file, &$plugin_dir = null)
             $plugin_dir = $dir;
 
             return true;
+        }
+    });
+
+    return $found;
+}
+
+function search_plugins_all(?string $file, ?array &$plugin_dirs = null): array
+{
+    $found = [];
+
+    with_plugins(function($dir, $name) use ($file, &$found, &$plugin_dirs) {
+        $_filepath = $dir . '/' . $file;
+
+        if (file_exists($_filepath)) {
+            $found[] = $_filepath;
+            $plugin_dirs[] = $dir;
         }
     });
 

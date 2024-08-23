@@ -48,13 +48,13 @@ if ($public_message) {
 
 // Showing details as appropriate
 
-if (defined('SHOW_ERRORS') && SHOW_ERRORS) {
+if (defined('SHOW_ERRORS') && SHOW_ERRORS || php_sapi_name() === 'cli') {
     // Show a boundary between public and private details
 
-    if (php_sapi_name() === 'cli') {
-        echo "--------------------\n";
-    } else {
+    if (php_sapi_name() !== 'cli') {
         ?><div style="border-top: 1px solid #999; margin: 2em 0"></div><?php
+    } elseif ($public_message) {
+        echo "--------------------\n";
     }
 
     // Styles for HTML
