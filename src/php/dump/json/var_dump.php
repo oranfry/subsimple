@@ -1,9 +1,13 @@
 <?php
 
-foreach ($arguments as $i => $data) {
+echo "\n[\n\n";
+
+foreach ($arguments as $i => $argument) {
     if ($i) {
-        echo "\n----------\n\n";
+        echo "\n" . str_repeat('-', 20) . "\n\n";
     }
 
-    var_dump($data);
+    var_dump($argument);
 }
+
+echo "\n]\n\n";
