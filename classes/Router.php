@@ -82,8 +82,18 @@ class Router
             if (isset($params['FORWARD'])) {
                 $forwardpath = $path;
 
-                if (isset($params['EAT'])) {
-                    $forwardpath = preg_replace('/^' . preg_quote($params['EAT'], '/') . '/', @$params['PREPEND'] ?? '', $forwardpath) ?: '/';
+                if (isset($params['EAT_REGEX'])) {
+                    $forwardpath = preg_replace('@^' . $params['EAT_REGEX'] . '@', '', $forwardpath);
+                } elseif (isset($params['EAT'])) {
+                    $forwardpath = preg_replace('@^' . preg_quote($params['EAT'], '@') . '@', '', $forwardpath);
+                }
+
+                if (isset($params['PREPEND'])) {
+                    $forwardpath = $params['PREPEND'] . $forwardpath;
+                }
+
+                if (!$forwardpath) {
+                    $forwardpath = '/';
                 }
 
                 return $params['FORWARD']::match($forwardpath, $page_params);
