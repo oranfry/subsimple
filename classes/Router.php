@@ -4,6 +4,11 @@ namespace subsimple;
 
 class Router
 {
+    public static function add(string $path, array $result): void
+    {
+        static::$routes[$path] = $result;
+    }
+
     public final static function match(string $path, array $page_params = []): bool
     {
         foreach (static::$routes ?? [] as $route => $params) {
