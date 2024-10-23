@@ -9,7 +9,7 @@ if (!defined('APP_HOME')) {
 
 require __DIR__ . '/functions.php';
 
-Config::set(require APP_HOME . '/config.php');
+Config::set(require APP_HOME . '/subsimple-config.php');
 
 define('PLUGINS', array_unique(array_merge(Config::get()->requires ?? [], [__DIR__])));
 
