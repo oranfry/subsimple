@@ -42,9 +42,9 @@ class Router
             // check that pattern matches
 
             if (count($route_methods) == 1 && reset($route_methods) == 'CLI') {
-                if ($pattern == '*') {
-                    $groups = ['CLI'];
-                } else {
+                $groups = ['CLI'];
+
+                if ($pattern !== '*') {
                     $routeparts = explode(' ', $pattern);
                     $pathparts = explode(' ', $path);
 
@@ -58,7 +58,7 @@ class Router
                         }
                     }
 
-                    $groups = array_merge(['CLI'], $pathparts);
+                    $groups = array_merge($groups, $pathparts);
                 }
             } elseif (!preg_match("@^{$pattern}$@", $path, $groups)) {
                 continue;
