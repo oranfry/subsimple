@@ -11,11 +11,12 @@ class Router
 
     public final static function match(string $path, array $page_params = []): bool
     {
+        $method_pattern = implode('|', ['GET', 'POST', 'DELETE', 'PUT', 'HTTP']);
+        $methods_pattern = '(?:' . $method_pattern . ')(?:\|(?:' . $method_pattern . '))*';
+        $http_pattern = '/^(' . $methods_pattern . ')\s+(\S+)$/';
+        $cli_pattern = '/^(CLI)\s+(.*)$/';
+
         foreach (static::$routes ?? [] as $route => $params) {
-            $method_pattern = implode('|', ['GET', 'POST', 'DELETE', 'PUT', 'HTTP']);
-            $methods_pattern = '(?:' . $method_pattern . ')(?:\|(?:' . $method_pattern . '))*';
-            $http_pattern = '/^(' . $methods_pattern . ')\s+(\S+)$/';
-            $cli_pattern = '/^(CLI)\s+(.*)$/';
 
             // validate route
 
