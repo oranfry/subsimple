@@ -17,7 +17,6 @@ class Router
         $cli_pattern = '/^(CLI)\s+(.*)$/';
 
         foreach (static::$routes ?? [] as $route => $params) {
-
             // validate route
 
             if (
@@ -33,18 +32,17 @@ class Router
 
             // check that method matches
 
-            if (
-                !in_array(@$_SERVER['REQUEST_METHOD'] ?? 'CLI', $route_methods)
-                && (!in_array('HTTP', $route_methods) || !@$_SERVER['REQUEST_METHOD'])
-            ) {
-                continue;
+            if (in_array($_method = @$_SERVER['REQUEST_METHOD'] ?? 'CLI', $route_methods)) {
+                $subsimple_method = $_method;
+            } elseif (@$_SERVER['REQUEST_METHOD'] && in_array('HTTP', $route_methods)) {
+                $subsimple_method = 'HTTP';
+            } else {
+                continue; // method does not match
             }
 
             // check that pattern matches
 
-            if (count($route_methods) == 1 && reset($route_methods) == 'CLI') {
-                $groups = ['CLI'];
-
+            if ($subsimple_method === 'CLI') {
                 if ($pattern !== '*') {
                     $routeparts = explode(' ', $pattern);
                     $pathparts = explode(' ', $path);
@@ -59,7 +57,7 @@ class Router
                         }
                     }
 
-                    $groups = array_merge($groups, $pathparts);
+                    $groups = [null, ...$pathparts];
                 }
             } elseif (!preg_match("@^{$pattern}$@", $path, $groups)) {
                 continue;
@@ -67,7 +65,7 @@ class Router
 
             // we have found a match
 
-            $subsimple_method = array_shift($groups);
+            $url = array_shift($groups);
 
             foreach ($groups as $i => $group) {
                 if (!array_key_exists($i, $params)) {
@@ -77,10 +75,14 @@ class Router
                 if ($params[$i]) {
                     $page_params[$params[$i]] = $group;
                 }
+
+                unset($params[$i]);
             }
 
             foreach ($params as $key => $value) {
-                if (!is_int($key)) {
+                if (is_int($key)) {
+                    $page_params[$params[$key]] = ''; // optional param which was not matched
+                } else {
                     $page_params[$key] = $value;
                 }
             }
@@ -106,6 +108,7 @@ class Router
             }
 
             define('SUBSIMPLE_METHOD', $subsimple_method);
+            define('SUBSIMPLE_URL', $url);
             define('PAGE_PARAMS', $page_params);
 
             foreach ($page_params as $key => $value) {
