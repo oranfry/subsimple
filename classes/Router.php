@@ -43,7 +43,9 @@ class Router
             // check that pattern matches
 
             if ($subsimple_method === 'CLI') {
-                if ($pattern !== '*') {
+                if ($pattern === '*') {
+                    $groups = [null];
+                } else {
                     $routeparts = explode(' ', $pattern);
                     $pathparts = explode(' ', $path);
 
