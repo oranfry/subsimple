@@ -10,7 +10,7 @@ if (php_sapi_name() === 'cli') {
     $wrap = 'htmlspecialchars';
 }
 
-echo "\n\n<<<<\n\n";
+echo "\n\n<<<< $location\n\n";
 
 foreach ($arguments as $i => $argument) {
     if ($i) {

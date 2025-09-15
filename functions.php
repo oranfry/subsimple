@@ -21,29 +21,29 @@ function date_shift($date, $offset)
 
 function dumpj(...$arguments): void
 {
-    _dump('json_encode', ...$arguments);
+    _dump(whereami(), 'json_encode', ...$arguments);
 }
 
 function dump(...$arguments): void
 {
-    _dump('var_dump', ...$arguments);
+    _dump(whereami(), 'var_dump', ...$arguments);
 }
 
 function ddj(...$arguments): void
 {
-    dumpj(...$arguments);
+    _dump(whereami(), 'json_encode', ...$arguments);
 
     die();
 }
 
 function dd(...$arguments): void
 {
-    dump(...$arguments);
+    _dump(whereami(), 'var_dump', ...$arguments);
 
     die();
 }
 
-function _dump($encoder, ...$arguments): void
+function _dump($location, $encoder, ...$arguments): void
 {
     $layout_paths = array_map(fn ($layout) => 'src/php/dump/' . $layout . '/' . $encoder . '.php', array_filter([
         defined('LAYOUT') ? LAYOUT : null,
@@ -57,6 +57,16 @@ function _dump($encoder, ...$arguments): void
             }
         }
     }
+}
+
+function whereami()
+{
+    $trace = debug_backtrace();
+    if (!isset($trace[1]['file'])) {
+        return '??';
+    }
+
+    return $trace[1]['file'] . ':' . $trace[1]['line'];
 }
 
 function deinit_plugins()

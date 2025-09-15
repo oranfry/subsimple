@@ -4,7 +4,7 @@ if (php_sapi_name() !== 'cli') {
     echo '<pre>';
 }
 
-echo "\n<<<<\n\n";
+echo "\n<<<< $location\n\n";
 
 foreach ($arguments as $i => $argument) {
     if ($i) {
