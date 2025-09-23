@@ -43,23 +43,23 @@ class Router
             // check that pattern matches
 
             if ($subsimple_method === 'CLI') {
-                if ($pattern === '*') {
-                    $groups = [null];
-                } else {
-                    $routeparts = explode(' ', $pattern);
-                    $pathparts = explode(' ', $path);
+                $groups = [null]; // means no URL
+                $routeparts = explode(' ', $pattern);
+                $pathparts = explode(' ', $path);
 
-                    if (count($routeparts) != count($pathparts)) {
-                        continue;
+                foreach ($routeparts as $i => $routepart) {
+                    if ($routepart === '*') {
+                        break;
                     }
 
-                    foreach ($routeparts as $i => $routepart) {
-                        if (!preg_match('@' . str_replace('@', '\@', $routepart) . '@', $pathparts[$i])) {
-                            continue 2;
-                        }
+                    if (
+                        count($pathparts) < $i + 1
+                        || !preg_match('@' . str_replace('@', '\@', $routepart) . '@', $pathparts[$i])
+                    ) {
+                        continue 2;
                     }
 
-                    $groups = [null, ...$pathparts];
+                    $groups[] = $pathparts[$i];
                 }
             } elseif (!preg_match("@^{$pattern}$@", $path, $groups)) {
                 continue;
@@ -99,10 +99,14 @@ class Router
                 }
 
                 if (isset($params['PREPEND'])) {
-                    $forwardpath = $params['PREPEND'] . $forwardpath;
+                    $forwardpath = $params['PREPEND'] . ($subsimple_method === 'CLI' ? ' ' : null) . $forwardpath;
                 }
 
-                if (!$forwardpath) {
+                if ($subsimple_method === 'CLI') {
+                    $forwardpath = implode(' ', array_filter(preg_split('/\s+/', $forwardpath)));
+                }
+
+                if ($subsimple_method !== 'CLI' && !$forwardpath) {
                     $forwardpath = '/';
                 }
 
