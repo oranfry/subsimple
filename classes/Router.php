@@ -47,21 +47,34 @@ class Router
                 $routeparts = explode(' ', $pattern);
                 $pathparts = explode(' ', $path);
 
-                foreach ($routeparts as $i => $routepart) {
+                foreach ($routeparts as $routepart_index => $routepart) {
                     if ($routepart === '*') {
                         break;
                     }
 
                     if (
-                        count($pathparts) < $i + 1
-                        || !preg_match('@' . str_replace('@', '\@', $routepart) . '@', $pathparts[$i])
+                        count($pathparts) < $routepart_index + 1
+                        || !preg_match('@' . str_replace('@', '\@', $routepart) . '@', $pathparts[$routepart_index])
                     ) {
                         continue 2;
                     }
 
-                    $groups[] = $pathparts[$i];
+                    $groups[] = $pathparts[$routepart_index];
                 }
             } elseif (!preg_match("@^{$pattern}$@", $path, $groups)) {
+                continue;
+            }
+
+            // in cli scenario, currently all path parts match corresponding
+            // route parts
+
+            // now check for leftover path parts which break the match
+
+            if (
+                $subsimple_method === 'CLI'
+                && $routepart !== '*'
+                && count($pathparts) > $routepart_index + 1
+            ) {
                 continue;
             }
 
