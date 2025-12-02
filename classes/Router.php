@@ -54,7 +54,7 @@ class Router
 
                     if (
                         count($pathparts) < $routepart_index + 1
-                        || !preg_match('@' . str_replace('@', '\@', $routepart) . '@', $pathparts[$routepart_index])
+                        || !preg_match('@^' . str_replace('@', '\@', $routepart) . '$@', $pathparts[$routepart_index])
                     ) {
                         continue 2;
                     }
