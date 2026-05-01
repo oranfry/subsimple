@@ -124,21 +124,37 @@ if (defined('SHOW_ERRORS') && SHOW_ERRORS || php_sapi_name() === 'cli') {
         }
 
         if (@$bt['function']) {
-            echo "    " . $bt['function'];
+            echo "    " . (@$bt['class'] ? @$bt['class'] . '::' : null) . $bt['function'];
 
             if (isset($bt['args'])) {
                 echo "(";
 
                 foreach ($bt['args'] as $i => $arg) {
-                    echo($i ? ', ' : '');
+                    if (count($bt['args']) > 1) {
+                        echo "\n        ";
+                    }
 
-                    $value = var_export($arg, 1);
+                    $value = @var_export($arg, 1);
+
+                    if (strlen($value) > 80) {
+                        $value = substr($value, 0, 40) . '…' . substr($string, -39);
+                    }
+
+                    $value = str_replace("\n", '\n', $value);
 
                     if (php_sapi_name() !== 'cli') {
                         $value = htmlspecialchars($value);
                     }
 
                     echo $value;
+
+                    if (count($bt['args']) > 1) {
+                        echo ',';
+                    }
+                }
+
+                if (count($bt['args']) > 1) {
+                    echo "\n    ";
                 }
 
                 echo ")\n";

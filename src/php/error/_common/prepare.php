@@ -25,7 +25,7 @@ if (!($suppress_log ?? false)) {
         $location_description = implode(':', array_filter([@$trace['file'], @$trace['line']]));
 
         if (@$trace['function']) {
-            $location_description .= ($location_description ? ' ' : null) .  '(' . $trace['function'] . ')';
+            $location_description .= ($location_description ? ' ' : null) .  '(' . (@$trace['class'] ? $trace['class'] . '::' : null) . $trace['function'] . ')';
         }
 
         error_log($location_description);
