@@ -137,7 +137,7 @@ if (defined('SHOW_ERRORS') && SHOW_ERRORS || php_sapi_name() === 'cli') {
                     $value = @var_export($arg, 1);
 
                     if (strlen($value) > 80) {
-                        $value = substr($value, 0, 40) . '…' . substr($string, -39);
+                        $value = substr($value, 0, 40) . '…' . substr($value, -39);
                     }
 
                     $value = str_replace("\n", '\n', $value);
