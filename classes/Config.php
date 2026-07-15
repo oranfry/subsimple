@@ -1,6 +1,6 @@
 <?php
 
-namespace subsimple;
+namespace OranFry\Subsimple;
 
 final class Config
 {

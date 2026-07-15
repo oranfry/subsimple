@@ -1,6 +1,6 @@
 <?php
 
-use subsimple\Config;
+use OranFry\Subsimple\Config;
 
 if (!defined('APP_HOME')) {
     error_log('Please define APP_HOME');

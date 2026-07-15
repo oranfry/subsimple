@@ -1,6 +1,6 @@
 <?php
 
-namespace subsimple;
+namespace OranFry\Subsimple;
 
 class Exception extends \Exception
 {

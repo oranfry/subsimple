@@ -1,8 +1,8 @@
 <?php
 
-use subsimple\Config;
-use subsimple\Exception;
-use subsimple\NotFoundException;
+use OranFry\Subsimple\Config;
+use OranFry\Subsimple\Exception;
+use OranFry\Subsimple\NotFoundException;
 
 function array_key_by_value(array $array): array
 {

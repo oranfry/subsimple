@@ -1,7 +1,7 @@
 {
     "autoload": {
         "psr-4": {
-            "subsimple\\": "classes"
+            "OranFry\\Subsimple\\": "classes"
         }
     },
     "name": "oranfry/subsimple",

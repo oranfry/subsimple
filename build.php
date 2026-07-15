@@ -1,6 +1,6 @@
 <?php
 
-use subsimple\Config;
+use OranFry\Subsimple\Config;
 
 require __DIR__ . '/functions.php';
 
