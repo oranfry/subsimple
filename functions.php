@@ -189,17 +189,32 @@ function route()
     }
 
     $router = new $routerclass();
-
-    if (!$router->match($path)) {
+    
+    if (!$result = $router->match($path)) {
         throw new NotFoundException("Not found: {$path}", 404);
     }
 
-    if (!defined('PAGE')) {
+    if ($redirect = @$result['page_params']['REDIRECT']) {
+        header('Location: ' . $redirect);
+        die('Redirecting...');
+    }
+
+    if (!isset($result['page_params']['PAGE'])) {
         throw new Exception('Could not determine page', 500);
     }
 
-    if (!search_plugins_for_controller(PAGE)) {
-        throw new Exception('Missing controller for page: ' . PAGE, 500);
+    if (!search_plugins_for_controller($result['page_params']['PAGE'])) {
+        throw new Exception('Missing controller for page: ' . $result['page_params']['PAGE'], 500);
+    }
+
+    // successfully routed
+
+    define('SUBSIMPLE_METHOD', $result['subsimple_method']);
+    define('SUBSIMPLE_URL', $result['url']);
+    define('PAGE_PARAMS', $result['page_params']);
+
+    foreach ($result['page_params'] as $key => $value) {
+        define($key, $value);
     }
 
     with_plugins(function($dir, $name) {

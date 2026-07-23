@@ -9,7 +9,7 @@ class Router
         static::$routes[$path] = $result;
     }
 
-    public final static function match(string $path, array $page_params = []): bool
+    public final static function match(string $path, array $page_params = []): ?array
     {
         $method_pattern = implode('|', ['GET', 'POST', 'DELETE', 'PUT', 'HTTP']);
         $methods_pattern = '(?:' . $method_pattern . ')(?:\|(?:' . $method_pattern . '))*';
@@ -105,10 +105,25 @@ class Router
             if (isset($params['FORWARD'])) {
                 $forwardpath = $path;
 
-                if (isset($params['EAT_REGEX'])) {
-                    $forwardpath = preg_replace('@^' . $params['EAT_REGEX'] . '@', '', $forwardpath);
-                } elseif (isset($params['EAT'])) {
-                    $forwardpath = preg_replace('@^' . preg_quote($params['EAT'], '@') . '@', '', $forwardpath);
+                $eaten = null;
+
+                $eatPattern = match (true) {
+                    isset($params['EAT_REGEX']) => $params['EAT_REGEX'],
+                    isset($params['EAT']) => preg_quote($params['EAT'], '@'),
+                    default => null,
+                };
+
+                if ($eatPattern) {
+                    if (!preg_match('@^(' . $eatPattern . ')(.*)@', $forwardpath, $matches)) {
+                        throw new Exception('Eat or eat regex does not match', 500);
+                    }
+
+                    if (count($matches) !== 3) {
+                        throw new Exception('Eat regex contains capture groups', 500);
+                    }
+
+                    $eaten = $matches[1];
+                    $forwardpath = $matches[2];
                 }
 
                 if (isset($params['PREPEND'])) {
@@ -117,26 +132,30 @@ class Router
 
                 if ($subsimple_method === 'CLI') {
                     $forwardpath = implode(' ', array_filter(preg_split('/\s+/', $forwardpath)));
-                }
-
-                if ($subsimple_method !== 'CLI' && !$forwardpath) {
+                } elseif (!$forwardpath) {
                     $forwardpath = '/';
                 }
 
-                return $params['FORWARD']::match($forwardpath, $page_params);
+                $result = $params['FORWARD']::match($forwardpath, $page_params);
+
+                if (isset($result['page_params']['REDIRECT'])) {
+                    if (isset($params['PREPEND'])) {
+                        if (!preg_match('@^' . preg_quote($params['PREPEND'], '@') . '(.*)@', $result['page_params']['REDIRECT'], $matches)) {
+                            throw new Exception('Redirect does not start with PREPEND string', 500);
+                        }
+
+                        $result['page_params']['REDIRECT'] = $matches[1];
+                    }
+
+                    $result['page_params']['REDIRECT'] = $eaten . $result['page_params']['REDIRECT'];
+                }
+
+                return $result;
             }
 
-            define('SUBSIMPLE_METHOD', $subsimple_method);
-            define('SUBSIMPLE_URL', $url);
-            define('PAGE_PARAMS', $page_params);
-
-            foreach ($page_params as $key => $value) {
-                define($key, $value);
-            }
-
-            return true;
+            return compact('subsimple_method', 'url', 'page_params');
         }
 
-        return false;
+        return null;
     }
 }
