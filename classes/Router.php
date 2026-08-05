@@ -9,7 +9,7 @@ class Router
         static::$routes[$path] = $result;
     }
 
-    public final static function match(string $path, array $page_params = []): ?array
+    public final static function match(string $path, array $page_params = [], array &$eatens = []): ?array
     {
         $method_pattern = implode('|', ['GET', 'POST', 'DELETE', 'PUT', 'HTTP']);
         $methods_pattern = '(?:' . $method_pattern . ')(?:\|(?:' . $method_pattern . '))*';
@@ -124,6 +124,7 @@ class Router
 
                     $eaten = $matches[1];
                     $forwardpath = $matches[2];
+                    $eatens[] = $eaten;
                 }
 
                 if (isset($params['PREPEND'])) {
@@ -136,7 +137,7 @@ class Router
                     $forwardpath = '/';
                 }
 
-                $result = $params['FORWARD']::match($forwardpath, $page_params);
+                $result = $params['FORWARD']::match($forwardpath, $page_params, $eatens);
 
                 if (isset($result['page_params']['REDIRECT'])) {
                     if (isset($params['PREPEND'])) {

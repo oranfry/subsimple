@@ -188,9 +188,9 @@ function route()
         throw new Exception('Specified router class [' . $routerclass . '] does not exist');
     }
 
-    $router = new $routerclass();
-    
-    if (!$result = $router->match($path)) {
+    $eatens = [];
+
+    if (!$result = $routerclass::match($path, [], $eatens)) {
         throw new NotFoundException("Not found: {$path}", 404);
     }
 
@@ -212,6 +212,7 @@ function route()
     define('SUBSIMPLE_METHOD', $result['subsimple_method']);
     define('SUBSIMPLE_URL', $result['url']);
     define('PAGE_PARAMS', $result['page_params']);
+    define('EATENS', $eatens);
 
     foreach ($result['page_params'] as $key => $value) {
         define($key, $value);
