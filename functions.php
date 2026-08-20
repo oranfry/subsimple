@@ -84,7 +84,7 @@ function do_controller()
 {
     return (function () {
         $page_controller = search_plugins_for_controller(PAGE, $_plugin_dir);
-        $controller_data = compact('_plugin_dir') + ($GLOBALS['initial_controller_data'] ?? []);
+        $controller_data = compact('_plugin_dir');
 
         // plugin controllers
 
@@ -93,48 +93,36 @@ function do_controller()
                 return;
             }
 
-            $data = ss_require($plugin_controller, $controller_data);
+            $plugin_controller_data = ss_require($plugin_controller, $controller_data);
 
-            if (!is_array($data)) {
+            if (!is_array($plugin_controller_data)) {
                 throw new Exception('plugin controller should return an array');
             }
 
-            $controller_data = array_merge($controller_data, $data);
+            $controller_data = array_merge($controller_data, $plugin_controller_data);
         });
-
-        // active plugin controllers
-
-        if (is_file($active_plugin_controller = $_plugin_dir . '/src/php/controller/plugin-active.php')) {
-            $data = ss_require($active_plugin_controller, $controller_data);
-
-            if (!is_array($data)) {
-                throw new Exception('active plugin controller should return an array');
-            }
-
-            $controller_data = array_merge($controller_data, $data);
-        }
 
         // app controller
 
         if (is_file($_app_controller = APP_HOME . '/src/php/controller/app.php')) {
-            $data = ss_require($_app_controller, $controller_data);
+            $app_controller_data = ss_require($_app_controller, $controller_data);
 
-            if (!is_array($data)) {
+            if (!is_array($app_controller_data)) {
                 throw new Exception('app controller should return an array');
             }
 
-            $controller_data = array_merge($controller_data, $data);
+            $controller_data = array_merge($controller_data, $app_controller_data);
         }
 
         // page controller
 
-        $data = ss_require($page_controller, $controller_data);
+        $page_controller_data = ss_require($page_controller, $controller_data);
 
-        if (!is_array($data)) {
+        if (!is_array($page_controller_data)) {
             throw new Exception('page controller should return an array');
         }
 
-        $controller_data = array_merge($controller_data, $data);
+        $controller_data = array_merge($controller_data, $page_controller_data);
 
         return $controller_data;
     })();
