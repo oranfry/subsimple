@@ -96,7 +96,7 @@ class Router
 
             foreach ($params as $key => $value) {
                 if (is_int($key)) {
-                    $page_params[$params[$key]] = ''; // optional param which was not matched
+                    $page_params[$params[$key]] = null; // optional param which was not matched
                 } else {
                     $page_params[$key] = $value;
                 }
