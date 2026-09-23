@@ -218,6 +218,10 @@ function route()
         define($key, $value);
     }
 
+    if (!defined('VIEW')) {
+        define('VIEW', PAGE);
+    }
+
     with_plugins(function($dir, $name) {
         $init_func = 'postroute_' . ($name ?? 'app');
 
