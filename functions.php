@@ -155,11 +155,11 @@ function init_plugins()
     });
 }
 
-function latest($type)
+function latest($type, $build = null)
 {
     $data = json_decode(file_get_contents(APP_HOME . '/latest.json'), true);
 
-    return $data[$type] ?? 0;
+    return $data[$build ?? 'default'][$type] ?? 0;
 }
 
 function load_plugin_libs()

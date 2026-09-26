@@ -11,168 +11,185 @@ define('PLUGINS', array_unique(array_merge(Config::get()->requires ?? [], [__DIR
 load_plugin_libs();
 init_plugins();
 
-$latests = [];
+$allLatests = [];
 
 if (!file_exists($path = APP_HOME . '/build.json')) {
     error_log('Buildfile does not exist, looking for: ' . $path . "\n");
     exit(1);
 }
 
-$build = json_decode(file_get_contents($path));
+$data = json_decode(file_get_contents($path));
+$builds = is_array($data) ? $data : [$data];
+$seen = [];
 
-if (!@$build->into) {
-    error_log('Please specify "into" in buildfile');
-    exit(1);
-}
+foreach ($builds as $build) {
+    $latests = [];
+    $name = $build->name ?? 'default';
 
-$build_into = APP_HOME . '/' . $build->into;
+    if (in_array($name, $seen)) {
+        error_log('Duplicate build name [' . $name . ']');
+        exit(1);
+    }
 
-shell_exec("rm -rf \"{$build_into}\"");
+    $seen[] = $name;
 
-foreach (@$build->collect ?? [] as $type => $props) {
-    $latest = 0;
-    $schedule = [];
+    if (!@$build->into) {
+        error_log('Please specify "into" in buildfile');
+        exit(1);
+    }
 
-    with_plugins(function($pdir, $name) use ($props, &$schedule, &$latest) {
-        $dir = "{$pdir}/" . $props->directory;
+    $build_into = APP_HOME . '/' . $build->into;
 
-        if (!is_dir($dir)) {
-            return;
-        }
+    shell_exec("rm -rf \"{$build_into}\"");
 
-        $handle = opendir($dir);
+    foreach (@$build->collect ?? [] as $type => $props) {
+        $latest = 0;
+        $schedule = [];
 
-        while ($file = readdir($handle)) {
-            if (preg_match('/^\./', $file)) {
-                continue;
+        with_plugins(function($pdir, $name) use ($props, &$schedule, &$latest) {
+            $dir = "{$pdir}/" . $props->directory;
+
+            if (!is_dir($dir)) {
+                return;
             }
 
-            $filepath = $dir . '/' . $file;
+            $handle = opendir($dir);
 
-            $latest = max(filemtime($filepath), $latest);
+            while ($file = readdir($handle)) {
+                if (preg_match('/^\./', $file)) {
+                    continue;
+                }
 
-            $schedule[] = $filepath;
+                $filepath = $dir . '/' . $file;
+
+                $latest = max(filemtime($filepath), $latest);
+
+                $schedule[] = $filepath;
+            }
+
+            closedir($handle);
+        });
+
+        $latest = hash('sha256', 'latest-' . $latest); // convert to hash for consistency with combine mode
+        $into = $build_into . '/' . $props->into;
+
+        foreach ($schedule as $filepath) {
+            if (preg_match('/(.*)(\..*)$/', basename($filepath), $groups)) {
+                $filename = $groups[1];
+                $ext = $groups[2];
+            } else {
+                $filename = $filepath;
+                $ext = '';
+            }
+
+            $dest = $into . '/' . $filename . '.' . $latest . $ext;
+            @mkdir(dirname($dest), 0777, true);
+
+            shell_exec("cp '{$filepath}' '{$dest}'");
         }
 
-        closedir($handle);
-    });
+        $latests[$type] = $latest;
+    }
 
-    $into = $build_into . '/' . $props->into;
+    foreach (@$build->combine ?? [] as $type => $props) {
+        $filedatas = [];
+        $wrapper_close = null;
+        $wrapper_open = null;
+        $separator = '';
 
-    foreach ($schedule as $filepath) {
-        if (preg_match('/(.*)(\..*)$/', basename($filepath), $groups)) {
-            $filename = $groups[1];
-            $ext = $groups[2];
-        } else {
-            $filename = $filepath;
-            $ext = '';
+        if (!@$props->into) {
+            echo "skipping {$type} (no into defined)\n";
+            continue;
         }
 
-        $dest = $into . '/' . $filename . '.' . $latest . $ext;
-        @mkdir(dirname($dest), 0777, true);
-
-        shell_exec("cp '{$filepath}' '{$dest}'");
-    }
-
-    $latests[$type] = $latest;
-}
-
-foreach (@$build->combine ?? [] as $type => $props) {
-    $filedatas = [];
-    $wrapper_close = null;
-    $wrapper_open = null;
-    $separator = '';
-
-    if (!@$props->into) {
-        echo "skipping {$type} (no into defined)\n";
-        continue;
-    }
-
-    if (!@$props->basename) {
-        echo "skipping {$type} (no basename defined)\n";
-        continue;
-    }
-
-    if (!@$props->extension) {
-        echo "skipping {$type} (no extension defined)\n";
-        continue;
-    }
-
-    if ($separator_file = @$props->wrapper->separator) {
-        $separator = ss_capture($separator_file);
-    }
-
-    if (@$props->wrapper->open) {
-        if (!$wrapper_open = search_plugins($props->wrapper->open)) {
-            echo 'wrapper open missing' . "\n";
-        }
-    }
-
-    if (@$props->wrapper->close) {
-        if (!$wrapper_close = search_plugins($props->wrapper->close)) {
-            echo 'wrapper close missing' . "\n";
-        }
-    }
-
-    $files = array_values($props->files);
-
-    for ($i = 0; $i < count($files); $i++) {
-        $file = $files[$i];
-
-        if (!$filepath = search_plugins(preg_replace('/.*:/', '', $file))) {
-            echo "skipping {$type} (file {$file} does not exist)\n";
-
-            continue 2;
+        if (!@$props->basename) {
+            echo "skipping {$type} (no basename defined)\n";
+            continue;
         }
 
-        if (preg_match('/^include:.*/', $file)) {
-            $morefiles = json_decode(file_get_contents($filepath), true);
+        if (!@$props->extension) {
+            echo "skipping {$type} (no extension defined)\n";
+            continue;
+        }
 
-            if (!is_array($morefiles)) {
-                echo "skipping {$type} (file {$file} should be JSON array)\n";
+        if ($separator_file = @$props->wrapper->separator) {
+            $separator = ss_capture($separator_file);
+        }
+
+        if (@$props->wrapper->open) {
+            if (!$wrapper_open = search_plugins($props->wrapper->open)) {
+                echo 'wrapper open missing' . "\n";
+            }
+        }
+
+        if (@$props->wrapper->close) {
+            if (!$wrapper_close = search_plugins($props->wrapper->close)) {
+                echo 'wrapper close missing' . "\n";
+            }
+        }
+
+        $files = array_values($props->files);
+
+        for ($i = 0; $i < count($files); $i++) {
+            $file = $files[$i];
+
+            if (!$filepath = search_plugins(preg_replace('/.*:/', '', $file))) {
+                echo "skipping {$type} (file {$file} does not exist)\n";
 
                 continue 2;
             }
 
-            array_splice($files, $i--, 1, array_values($morefiles));
+            if (preg_match('/^include:.*/', $file)) {
+                $morefiles = json_decode(file_get_contents($filepath), true);
 
-            continue;
+                if (!is_array($morefiles)) {
+                    echo "skipping {$type} (file {$file} should be JSON array)\n";
+
+                    continue 2;
+                }
+
+                array_splice($files, $i--, 1, array_values($morefiles));
+
+                continue;
+            }
+
+            ob_start();
+
+            if ($wrapper_open) {
+                require $wrapper_open;
+            }
+
+            if (preg_match('/^php:.*/', $file)) {
+                require $filepath;
+            } else {
+                readfile($filepath);
+            }
+
+            if ($wrapper_close) {
+                require $wrapper_close;
+            }
+
+            $filedatas[] = ob_get_contents();
+
+            ob_end_clean();
         }
 
-        ob_start();
+        $filedata = implode($separator, $filedatas);
+        $latest = hash('SHA256', $filedata);
+        $into = $build_into . '/' . $props->into;
+        $dest = $into . '/' . $props->basename . '.' . $latest . '.' . $props->extension;
 
-        if ($wrapper_open) {
-            require $wrapper_open;
+        @mkdir(dirname($dest), 0777, true);
+        file_put_contents($dest, $filedata);
+
+        foreach ($props->then ?? [] as $command_template) {
+            shell_exec(str_replace('{}', $dest, $command_template));
         }
 
-        if (preg_match('/^php:.*/', $file)) {
-            require $filepath;
-        } else {
-            readfile($filepath);
-        }
-
-        if ($wrapper_close) {
-            require $wrapper_close;
-        }
-
-        $filedatas[] = ob_get_contents();
-
-        ob_end_clean();
+        $latests[$type] = $latest;
     }
 
-    $filedata = implode($separator, $filedatas);
-    $latest = hash('SHA256', $filedata);
-    $into = $build_into . '/' . $props->into;
-    $dest = $into . '/' . $props->basename . '.' . $latest . '.' . $props->extension;
-
-    @mkdir(dirname($dest), 0777, true);
-    file_put_contents($dest, $filedata);
-
-    foreach ($props->then ?? [] as $command_template) {
-        shell_exec(str_replace('{}', $dest, $command_template));
-    }
-
-    $latests[$type] = $latest;
+    $allLatests[$name] = $latests;
 }
 
-file_put_contents(APP_HOME . '/latest.json', json_encode($latests));
+file_put_contents(APP_HOME . '/latest.json', json_encode($allLatests));
