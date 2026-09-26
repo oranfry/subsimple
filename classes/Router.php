@@ -81,6 +81,7 @@ class Router
             // we have found a match
 
             $url = array_shift($groups);
+            $onetime_eat = null;
 
             foreach ($groups as $i => $group) {
                 if (!array_key_exists($i, $params)) {
@@ -89,7 +90,11 @@ class Router
 
                 if ($params[$i]) {
                     foreach (explode(',', $params[$i]) as $param) {
-                        $page_params[$param] = $group;
+                        if ($param === 'EAT') {
+                            $onetime_eat = $group;
+                        } else {
+                            $page_params[$param] = $group;
+                        }
                     }
                 }
 
@@ -100,6 +105,10 @@ class Router
                 if (is_int($key)) {
                     // optional param which was not matched
                     foreach (explode(',', $params[$key]) as $param) {
+                        if ($param === 'EAT') {
+                            continue;
+                        }
+
                         $page_params[$param] = null;
                     }
                 } else {
@@ -115,7 +124,7 @@ class Router
                 $eatPattern = match (true) {
                     isset($params['EAT_REGEX']) => $params['EAT_REGEX'],
                     isset($params['EAT']) => preg_quote($params['EAT'], '@'),
-                    isset($page_params['EAT']) => preg_quote($page_params['EAT'], '@'),
+                    isset($onetime_eat) => preg_quote($onetime_eat, '@'),
                     default => null,
                 };
 
