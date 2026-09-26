@@ -88,7 +88,9 @@ class Router
                 }
 
                 if ($params[$i]) {
-                    $page_params[$params[$i]] = $group;
+                    foreach (explode(',', $params[$i]) as $param) {
+                        $page_params[$param] = $group;
+                    }
                 }
 
                 unset($params[$i]);
@@ -96,7 +98,10 @@ class Router
 
             foreach ($params as $key => $value) {
                 if (is_int($key)) {
-                    $page_params[$params[$key]] = null; // optional param which was not matched
+                    // optional param which was not matched
+                    foreach (explode(',', $params[$key]) as $param) {
+                        $page_params[$param] = null;
+                    }
                 } else {
                     $page_params[$key] = $value;
                 }
