@@ -115,6 +115,7 @@ class Router
                 $eatPattern = match (true) {
                     isset($params['EAT_REGEX']) => $params['EAT_REGEX'],
                     isset($params['EAT']) => preg_quote($params['EAT'], '@'),
+                    isset($page_params['EAT']) => preg_quote($page_params['EAT'], '@'),
                     default => null,
                 };
 
