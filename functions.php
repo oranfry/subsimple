@@ -155,11 +155,25 @@ function init_plugins()
     });
 }
 
-function latest($type, $build = null)
+function latest(string $type, string $filename, $build = null): string
 {
+    $build ??= defined('BUILD_NAME') ? BUILD_NAME : 'default';
+
+    if (preg_match('/(.*)(\..*)$/', $filename, $groups)) {
+        $stem = $groups[1];
+        $ext = $groups[2];
+    } else {
+        $stem = $filename;
+        $ext = '';
+    }
+
     $data = json_decode(file_get_contents(APP_HOME . '/latest.json'), true);
 
-    return $data[$build ?? 'default'][$type] ?? 0;
+    if (!$latest = $data[$build][$type] ?? null) {
+        return '#';
+    }
+
+    return "$latest[url]/$stem.$latest[hash]$ext";
 }
 
 function load_plugin_libs()

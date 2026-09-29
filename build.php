@@ -24,30 +24,26 @@ $seen = [];
 
 foreach ($builds as $build) {
     $latests = [];
-    $name = $build->name ?? 'default';
+    $build_name = $build->name ?? 'default';
 
-    if (in_array($name, $seen)) {
-        error_log('Duplicate build name [' . $name . ']');
+    if (in_array($build_name, $seen)) {
+        error_log('Duplicate build name [' . $build_name . ']');
         exit(1);
     }
 
-    $seen[] = $name;
+    $seen[] = $build_name;
 
-    if (!@$build->into) {
-        error_log('Please specify "into" in buildfile');
-        exit(1);
-    }
+    $build_url = str_replace(['{NAME}'], [$build_name], $build->url ?? '/build/{NAME}');
+    $build_into = APP_HOME . '/' . str_replace(['{NAME}', '{URL}'], [$build_name, $build_url], $build->into ?? 'public' . (substr($build_url, 0, 1) !== '/' ? '/' : null) . '{URL}');
 
-    $build_into = APP_HOME . '/' . $build->into;
-
-    shell_exec("rm -rf \"{$build_into}\"");
+    shell_exec("rm -rf \"$build_into\"");
 
     foreach (@$build->collect ?? [] as $type => $props) {
         $latest = 0;
         $schedule = [];
 
         with_plugins(function($pdir, $name) use ($props, &$schedule, &$latest) {
-            $dir = "{$pdir}/" . $props->directory;
+            $dir = "$pdir/$props->directory";
 
             if (!is_dir($dir)) {
                 return;
@@ -70,8 +66,9 @@ foreach ($builds as $build) {
             closedir($handle);
         });
 
-        $latest = hash('sha256', 'latest-' . $latest); // convert to hash for consistency with combine mode
+        $hash = hash('sha256', 'latest-' . $latest); // convert to hash for consistency with combine mode
         $into = $build_into . '/' . $props->into;
+        $url = $build_url . '/' . $props->into;
 
         foreach ($schedule as $filepath) {
             if (preg_match('/(.*)(\..*)$/', basename($filepath), $groups)) {
@@ -82,13 +79,13 @@ foreach ($builds as $build) {
                 $ext = '';
             }
 
-            $dest = $into . '/' . $filename . '.' . $latest . $ext;
+            $dest = $into . '/' . $filename . '.' . $hash . $ext;
             @mkdir(dirname($dest), 0777, true);
 
             shell_exec("cp '{$filepath}' '{$dest}'");
         }
 
-        $latests[$type] = $latest;
+        $latests[$type] = compact('hash', 'url');
     }
 
     foreach (@$build->combine ?? [] as $type => $props) {
@@ -109,6 +106,11 @@ foreach ($builds as $build) {
 
         if (!@$props->extension) {
             echo "skipping {$type} (no extension defined)\n";
+            continue;
+        }
+
+        if (!preg_match('/^[a-z]+$/', $props->extension)) {
+            echo "skipping {$type} (invalid extension)\n";
             continue;
         }
 
@@ -175,9 +177,10 @@ foreach ($builds as $build) {
         }
 
         $filedata = implode($separator, $filedatas);
-        $latest = hash('SHA256', $filedata);
+        $hash = hash('SHA256', $filedata);
         $into = $build_into . '/' . $props->into;
-        $dest = $into . '/' . $props->basename . '.' . $latest . '.' . $props->extension;
+        $url = $build_url . '/' . $props->into;
+        $dest = $into . '/' . $props->basename . '.' . $hash . '.' . $props->extension;
 
         @mkdir(dirname($dest), 0777, true);
         file_put_contents($dest, $filedata);
@@ -186,10 +189,10 @@ foreach ($builds as $build) {
             shell_exec(str_replace('{}', $dest, $command_template));
         }
 
-        $latests[$type] = $latest;
+        $latests[$type] = (object) compact('hash', 'url');
     }
 
-    $allLatests[$name] = $latests;
+    $allLatests[$build_name] = $latests;
 }
 
 file_put_contents(APP_HOME . '/latest.json', json_encode($allLatests));
