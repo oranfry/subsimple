@@ -1,5 +1,6 @@
 <?php
 
+use OranFry\Subsimple\Builder;
 use OranFry\Subsimple\Config;
 use OranFry\Subsimple\Exception;
 use OranFry\Subsimple\NotFoundException;
@@ -167,7 +168,7 @@ function latest(string $type, string $filename, $build = null): string
         $ext = '';
     }
 
-    $data = json_decode(file_get_contents(APP_HOME . '/latest.json'), true);
+    $data = Builder::latest();
 
     if (!$latest = $data[$build][$type] ?? null) {
         return '#';
