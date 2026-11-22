@@ -6,6 +6,7 @@
     },
     "name": "oranfry/subsimple",
     "require": {
-        "php": ">=8.1"
+        "php": ">=8.1",
+        "patchwork/jsqueeze": "^2.0"
     }
 }

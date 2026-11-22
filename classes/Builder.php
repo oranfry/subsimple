@@ -179,6 +179,12 @@ class Builder
                 }
 
                 $filedata = implode($separator, $filedatas);
+
+                if (@$build->jsqueeze) {
+                    $squeeze ??= new JSqueeze();
+                    $filedata = $squeeze->squeeze($js);
+                }
+
                 $hash = hash('SHA256', $filedata);
                 $into = $build_into . '/' . $props->into;
                 $url = $build_url . '/' . $props->into;
