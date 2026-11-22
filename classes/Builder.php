@@ -180,9 +180,35 @@ class Builder
 
                 $filedata = implode($separator, $filedatas);
 
-                if (@$build->jsqueeze) {
-                    $squeeze ??= new JSqueeze();
-                    $filedata = $squeeze->squeeze($js);
+                if (@$props->minify && (!defined('DISABLE_MINIFY') || !DISABLE_MINIFY)) {
+                    $descriptorspec = [
+                        0 => ['pipe', 'r'],
+                        1 => ['pipe', 'w'],
+                        2 => ['pipe', 'w'],
+                    ];
+
+                    $process = proc_open('esbuild --minify', $descriptorspec, $pipes);
+
+                    if (is_resource($process)) {
+                        fwrite($pipes[0], $filedata);
+                        fclose($pipes[0]);
+
+                        $stdout = stream_get_contents($pipes[1]);
+                        $stderr = stream_get_contents($pipes[2]);
+
+                        fclose($pipes[1]);
+                        fclose($pipes[2]);
+
+                        $exitCode = proc_close($process);
+
+                        if (!$stderr && !$exitCode) {
+                            $filedata = $stdout;
+                        } else {
+                            echo "$build_name: minificaiton failed\n";
+                        }
+                    } else {
+                        echo "$build_name: unable to start the minfication process\n";
+                    }
                 }
 
                 $hash = hash('SHA256', $filedata);
