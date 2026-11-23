@@ -48,7 +48,7 @@ if ($public_message) {
 
 // Showing details as appropriate
 
-if (defined('SHOW_ERRORS') && SHOW_ERRORS || php_sapi_name() === 'cli') {
+if (read_constant('SHOW_ERRORS') || php_sapi_name() === 'cli') {
     // Show a boundary between public and private details
 
     if (php_sapi_name() !== 'cli') {

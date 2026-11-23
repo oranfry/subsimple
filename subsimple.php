@@ -30,7 +30,7 @@ try {
 } catch (Exception $exception) {
     (function () use ($exception) {
         $layout_paths = array_filter([
-            defined('LAYOUT') ? LAYOUT : null,
+            read_constant('LAYOUT'),
             'default',
         ]);
 

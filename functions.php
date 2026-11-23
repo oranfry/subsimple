@@ -107,7 +107,7 @@ function do_layout($viewdata)
 function _dump($location, $encoder, ...$arguments): void
 {
     $layout_paths = array_map(fn ($layout) => 'src/php/dump/' . $layout . '/' . $encoder . '.php', array_filter([
-        defined('LAYOUT') ? LAYOUT : null,
+        read_constant('LAYOUT'),
         'default',
     ]));
 
@@ -148,7 +148,7 @@ function init_plugins()
 
 function latest(string $type, string $filename, $build = null): string
 {
-    $build ??= defined('BUILD_NAME') ? BUILD_NAME : 'default';
+    $build ??= read_constant('BUILD_NAME', 'default');
 
     if (preg_match('/(.*)(\..*)$/', $filename, $groups)) {
         $stem = $groups[1];

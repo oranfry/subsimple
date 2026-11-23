@@ -9,7 +9,7 @@ $public = array_filter([
 
 $private = [];
 
-if (defined('SHOW_ERRORS') && SHOW_ERRORS) {
+if (read_constant('SHOW_ERRORS')) {
     $private = [
         'private_exception' => get_class($exception),
         'private_message' => $exception->getMessage(),

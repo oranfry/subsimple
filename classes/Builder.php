@@ -187,7 +187,7 @@ class Builder
                         2 => ['pipe', 'w'],
                     ];
 
-                    $command = defined('MINIFY_COMMAND') ? MINIFY_COMMAND : 'esbuild --minify';
+                    $command = read_constant('MINIFY_COMMAND', 'esbuild --minify');
                     $process = proc_open($command, $descriptorspec, $pipes);
 
                     if (is_resource($process)) {
