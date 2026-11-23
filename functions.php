@@ -189,6 +189,18 @@ function nprint($something)
     return !print($something);
 }
 
+function read_constant(
+    string $name,
+    int|float|string|bool|array|null $default = null
+): int|float|string|bool|array|null
+{
+    if (defined($name)) {
+        return constant($name);
+    }
+
+    return $default;
+}
+
 function route()
 {
     global $argv;
