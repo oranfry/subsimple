@@ -2,6 +2,8 @@
 
 namespace OranFry\Subsimple;
 
+use Exception;
+
 class Builder
 {
     private static ?array $latests = null;
@@ -188,27 +190,71 @@ class Builder
                     ];
 
                     $command = read_constant('MINIFY_COMMAND', 'esbuild --minify');
-                    $process = proc_open($command, $descriptorspec, $pipes);
 
-                    if (is_resource($process)) {
-                        fwrite($pipes[0], $filedata);
-                        fclose($pipes[0]);
+                    try {
+                        $process = proc_open($command, $descriptorspec, $pipes);
 
-                        $stdout = stream_get_contents($pipes[1]);
-                        $stderr = stream_get_contents($pipes[2]);
+                        if (!is_resource($process)) {
+                            throw new Exception('Saw errors output on STDERR');
+                        }
+
+                        stream_set_blocking($pipes[0], false);
+                        stream_set_blocking($pipes[1], false);
+                        stream_set_blocking($pipes[2], false);
+
+                        $inputLen = strlen($filedata);
+                        $bytesWritten = 0;
+                        $stdout = '';
+                        $stderr = '';
+
+                        while ($bytesWritten < $inputLen || !feof($pipes[1])) {
+                            $read = [$pipes[1], $pipes[2]];
+                            $write = ($bytesWritten < $inputLen) ? [$pipes[0]] : null;
+                            $except = null;
+
+                            if (stream_select($read, $write, $except, 5) > 0) {
+                                if (!empty($write)) {
+                                    $written = fwrite($pipes[0], substr($filedata, $bytesWritten));
+
+                                    if ($written === false) {
+                                        throw new Exception('Write error');
+                                    }
+
+                                    $bytesWritten += $written;
+
+                                    if ($bytesWritten >= $inputLen) {
+                                        fclose($pipes[0]);
+                                    }
+                                }
+
+                                if (in_array($pipes[1], $read, true)) {
+                                    $stdout .= fread($pipes[1], 8192);
+                                }
+
+                                if (in_array($pipes[2], $read, true)) {
+                                    $stderr .= fread($pipes[2], 8192);
+                                }
+                            }
+                        }
 
                         fclose($pipes[1]);
                         fclose($pipes[2]);
 
                         $exitCode = proc_close($process);
 
-                        if (!$stderr && !$exitCode) {
-                            $filedata = $stdout;
-                        } else {
-                            echo "$build_name: minificaiton failed\n";
+                        if ($stderr) {
+                            error_log($stderr);
+                            throw new Exception("Saw errors output on STDERR");
                         }
-                    } else {
-                        echo "$build_name: unable to start the minfication process\n";
+
+                        if ($exitCode) {
+                            error_log('Exit code [' . $exitCode . ']');
+                            throw new Exception('Got nonzero exit code');
+                        }
+
+                        $filedata = $stdout;
+                    } catch (Exception $e) {
+                        echo "Minification for build '$build_name': " . $e->getMessage() . "\n";
                     }
                 }
 
