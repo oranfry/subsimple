@@ -20,23 +20,6 @@ function date_shift($date, $offset)
     return date('Y-m-d', strtotime($offset, strtotime($date)));
 }
 
-function dumpj(...$arguments): void
-{
-    _dump(whereami(), 'json_encode', ...$arguments);
-}
-
-function dump(...$arguments): void
-{
-    _dump(whereami(), 'var_dump', ...$arguments);
-}
-
-function ddj(...$arguments): void
-{
-    _dump(whereami(), 'json_encode', ...$arguments);
-
-    die();
-}
-
 function dd(...$arguments): void
 {
     _dump(whereami(), 'var_dump', ...$arguments);
@@ -44,30 +27,11 @@ function dd(...$arguments): void
     die();
 }
 
-function _dump($location, $encoder, ...$arguments): void
+function ddj(...$arguments): void
 {
-    $layout_paths = array_map(fn ($layout) => 'src/php/dump/' . $layout . '/' . $encoder . '.php', array_filter([
-        defined('LAYOUT') ? LAYOUT : null,
-        'default',
-    ]));
+    _dump(whereami(), 'json_encode', ...$arguments);
 
-    foreach ($layout_paths as $include) {
-        foreach (search_plugins_all($include) as $handler) {
-            if (require $handler ?? true) {
-                return;
-            }
-        }
-    }
-}
-
-function whereami()
-{
-    $trace = debug_backtrace();
-    if (!isset($trace[1]['file'])) {
-        return '??';
-    }
-
-    return $trace[1]['file'] . ':' . $trace[1]['line'];
+    die();
 }
 
 function deinit_plugins()
@@ -140,6 +104,32 @@ function do_layout($viewdata)
     require $layout_file;
 }
 
+function _dump($location, $encoder, ...$arguments): void
+{
+    $layout_paths = array_map(fn ($layout) => 'src/php/dump/' . $layout . '/' . $encoder . '.php', array_filter([
+        defined('LAYOUT') ? LAYOUT : null,
+        'default',
+    ]));
+
+    foreach ($layout_paths as $include) {
+        foreach (search_plugins_all($include) as $handler) {
+            if (require $handler ?? true) {
+                return;
+            }
+        }
+    }
+}
+
+function dump(...$arguments): void
+{
+    _dump(whereami(), 'var_dump', ...$arguments);
+}
+
+function dumpj(...$arguments): void
+{
+    _dump(whereami(), 'json_encode', ...$arguments);
+}
+
 function identity($argument)
 {
     return $argument;
@@ -191,7 +181,7 @@ function nprint($something)
 
 function read_constant(
     string $name,
-    int|float|string|bool|array|null $default = null
+    int|float|string|bool|array|null $default = null,
 ): int|float|string|bool|array|null
 {
     if (defined($name)) {
@@ -371,7 +361,19 @@ function var_die($var)
     }
 
     $function($var);
-    die('-');
+
+    echo '-';
+    die(0);
+}
+
+function whereami()
+{
+    $trace = debug_backtrace();
+    if (!isset($trace[1]['file'])) {
+        return '??';
+    }
+
+    return $trace[1]['file'] . ':' . $trace[1]['line'];
 }
 
 function with_plugins($callback)
