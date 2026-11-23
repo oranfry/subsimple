@@ -180,14 +180,15 @@ class Builder
 
                 $filedata = implode($separator, $filedatas);
 
-                if (@$props->minify && (!defined('DISABLE_MINIFY') || !DISABLE_MINIFY)) {
+                if (@$props->minify) {
                     $descriptorspec = [
                         0 => ['pipe', 'r'],
                         1 => ['pipe', 'w'],
                         2 => ['pipe', 'w'],
                     ];
 
-                    $process = proc_open('esbuild --minify', $descriptorspec, $pipes);
+                    $command = defined('MINIFY_COMMAND') ? MINIFY_COMMAND : 'esbuild --minify';
+                    $process = proc_open($command, $descriptorspec, $pipes);
 
                     if (is_resource($process)) {
                         fwrite($pipes[0], $filedata);
